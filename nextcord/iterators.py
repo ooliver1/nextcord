@@ -306,7 +306,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
             elif self.limit == 101:
                 self.limit = 100  # Thanks discord
 
-            self._retrieve_messages = self._retrieve_messages_around_strategy  # type: ignore
+            self._retrieve_messages = self._retrieve_messages_around_strategy
             if self.before and self.after:
                 # lambda type ignores are as before/after/around are optional but exist here
                 self._filter = lambda m: self.after.id < int(m["id"]) < self.before.id  # type: ignore
@@ -316,11 +316,11 @@ class HistoryIterator(_AsyncIterator["Message"]):
                 self._filter = lambda m: self.after.id < int(m["id"])  # type: ignore
         else:
             if self.reverse:
-                self._retrieve_messages = self._retrieve_messages_after_strategy  # type: ignore
+                self._retrieve_messages = self._retrieve_messages_after_strategy
                 if self.before:
                     self._filter = lambda m: int(m["id"]) < self.before.id  # type: ignore
             else:
-                self._retrieve_messages = self._retrieve_messages_before_strategy  # type: ignore
+                self._retrieve_messages = self._retrieve_messages_before_strategy
                 if self.after and self.after != OLDEST_OBJECT:
                     self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
 
@@ -653,12 +653,12 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
         if self.before:
             self.reverse = True
-            self._retrieve_guilds = self._retrieve_guilds_before_strategy  # type: ignore
+            self._retrieve_guilds = self._retrieve_guilds_before_strategy
             if self.after:
                 self._filter = lambda m: int(m["id"]) > self.after.id  # type: ignore
         else:
             self.reverse = False
-            self._retrieve_guilds = self._retrieve_guilds_after_strategy  # type: ignore
+            self._retrieve_guilds = self._retrieve_guilds_after_strategy
 
     async def next(self) -> Guild:
         if self.guilds.empty():

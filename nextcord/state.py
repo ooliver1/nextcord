@@ -268,8 +268,8 @@ class ConnectionState:
         self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
 
         if not intents.members or member_cache_flags._empty:
-            self.store_user = self.create_user  # type: ignore
-            self.deref_user = self.deref_user_no_intents  # type: ignore
+            self.store_user = self.create_user
+            self.deref_user = self.deref_user_no_intents
 
         self.parsers = parsers = {}
         for attr, func in inspect.getmembers(self):
