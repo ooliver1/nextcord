@@ -1354,7 +1354,7 @@ class GroupMixin(Generic[CogT]):
     def command(
         self,
         name: str = ...,
-        cls: Type[Command[CogT, P, T]] = ...,
+        cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1372,7 +1372,7 @@ class GroupMixin(Generic[CogT]):
     def command(
         self,
         name: str = ...,
-        cls: Type[CommandT] = ...,
+        cls: Type[CommandT] = Command,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]:
@@ -1407,7 +1407,7 @@ class GroupMixin(Generic[CogT]):
     def group(
         self,
         name: str = ...,
-        cls: Type[Group[CogT, P, T]] = ...,
+        cls: Type[Group[CogT, P, T]] = MISSING,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1425,7 +1425,7 @@ class GroupMixin(Generic[CogT]):
     def group(
         self,
         name: str = ...,
-        cls: Type[GroupT] = ...,
+        cls: Type[GroupT] = MISSING,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]:
@@ -1575,7 +1575,7 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 @overload
 def command(
     name: str = ...,
-    cls: Type[Command[CogT, P, T]] = ...,
+    cls: Type[Command[CogT, P, T]] = Command[CogT, P, T],
     **attrs: Any,
 ) -> Callable[
     [
@@ -1592,7 +1592,7 @@ def command(
 @overload
 def command(
     name: str = ...,
-    cls: Type[CommandT] = ...,
+    cls: Type[CommandT] = Command,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1657,7 +1657,7 @@ def command(
     ) -> CommandT:
         if isinstance(func, Command):
             raise TypeError("Callback is already a command.")
-        return cls(func, name=name, **attrs)  # type: ignore
+        return cls(func, name=name, **attrs)
         # huge error i cannot comprehend
 
     return decorator
@@ -1666,7 +1666,6 @@ def command(
 @overload
 def group(
     name: str = ...,
-    cls: Type[Group[CogT, P, T]] = ...,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1683,7 +1682,24 @@ def group(
 @overload
 def group(
     name: str = ...,
-    cls: Type[GroupT] = ...,
+    cls: Type[Group[CogT, P, T]] = Group[CogT, P, T],
+    **attrs: Any,
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
+            Callable[Concatenate[ContextT, P], Coro[T]],
+        ]
+    ],
+    Group[CogT, P, T],
+]:
+    ...
+
+
+@overload
+def group(
+    name: str = ...,
+    cls: Type[GroupT] = Group,
     **attrs: Any,
 ) -> Callable[
     [

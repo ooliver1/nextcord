@@ -227,7 +227,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
 
             if self.guild is None or isinstance(self.guild, Object):
                 for element in reversed(data):
-                    await self.users.put(User(state=self.state, data=element))  # type: ignore
+                    await self.users.put(User(state=self.state, data=element))
             else:
                 for element in reversed(data):
                     member_id = int(element["id"])
@@ -235,7 +235,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
                     if member is not None:
                         await self.users.put(member)
                     else:
-                        await self.users.put(User(state=self.state, data=element))  # type: ignore
+                        await self.users.put(User(state=self.state, data=element))
 
 
 class HistoryIterator(_AsyncIterator["Message"]):
@@ -723,8 +723,12 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
 
 class MemberIterator(_AsyncIterator["Member"]):
-    def __init__(self, guild, limit=1000, after=None):
-
+    def __init__(
+        self,
+        guild: Guild,
+        limit: Optional[int] = 1000,
+        after: Optional[Union[Snowflake, datetime.datetime]] = None,
+    ):
         if isinstance(after, datetime.datetime):
             after = Object(id=time_snowflake(after, high=True))
 

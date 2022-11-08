@@ -1695,9 +1695,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         elif self.type is ApplicationCommandOptionType.mentionable:
             user_role_list: List[Union[User, Member, Role]] = get_users_from_interaction(
                 state, interaction
-            ) + get_roles_from_interaction(
-                state, interaction
-            )  # pyright: ignore
+            ) + get_roles_from_interaction(state, interaction)
             # pyright is so sure that you cant add role + user | member
             # when the resulting type is right
             mentionables = {mentionable.id: mentionable for mentionable in user_role_list}
