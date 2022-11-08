@@ -620,6 +620,15 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                     raise exc
         view.previous = previous
 
+        if argument is None:
+            if param.kind == param.VAR_POSITIONAL:
+                raise RuntimeError()
+            if required:
+                if self._is_typing_optional(param.annotation):
+                    return None
+                raise MissingRequiredArgument(param)
+            return param.default
+
         # type-checker fails to narrow argument
         return await run_converters(ctx, converter, argument, param)
 
@@ -1607,12 +1616,14 @@ def command(
 
 
 def command(
-    name: str = MISSING, cls: Type[CommandT] = MISSING, **attrs: Any
+    name: str = MISSING,
+    cls: Union[Type[CommandT], Type[Command[CogT, P, T]]] = MISSING,
+    **attrs: Any,
 ) -> Callable[
     [
         Union[
+            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
-            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
         ]
     ],
     Union[Command[CogT, P, T], CommandT],
@@ -1647,18 +1658,18 @@ def command(
         If the function is not a coroutine or is already a command.
     """
     if cls is MISSING:
-        cls = Command  # type: ignore
+        cls = Command
 
     def decorator(
         func: Union[
             Callable[Concatenate[ContextT, P], Coro[Any]],
             Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
         ]
-    ) -> CommandT:
+    ) -> Union[Command[CogT, P, T], CommandT]:
         if isinstance(func, Command):
             raise TypeError("Callback is already a command.")
+
         return cls(func, name=name, **attrs)
-        # huge error i cannot comprehend
 
     return decorator
 
@@ -1682,7 +1693,7 @@ def group(
 @overload
 def group(
     name: str = ...,
-    cls: Type[Group[CogT, P, T]] = Group[CogT, P, T],
+    cls: Type[Group[CogT, P, T]] = MISSING,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1699,7 +1710,7 @@ def group(
 @overload
 def group(
     name: str = ...,
-    cls: Type[GroupT] = Group,
+    cls: Type[GroupT] = MISSING,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1715,13 +1726,13 @@ def group(
 
 def group(
     name: str = MISSING,
-    cls: Type[GroupT] = MISSING,
+    cls: Union[Type[GroupT], Type[Group[CogT, P, T]]] = MISSING,
     **attrs: Any,
 ) -> Callable[
     [
         Union[
+            Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
-            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
         ]
     ],
     Union[Group[CogT, P, T], GroupT],
@@ -1735,7 +1746,8 @@ def group(
         The ``cls`` parameter can now be passed.
     """
     if cls is MISSING:
-        cls = Group  # type: ignore
+        cls = Group
+
     return command(name=name, cls=cls, **attrs)  # type: ignore
 
 

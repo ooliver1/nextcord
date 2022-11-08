@@ -261,6 +261,9 @@ class MemberConverter(IDConverter[nextcord.Member]):
             if not result:
                 raise MemberNotFound(argument)
 
+        if not isinstance(result, nextcord.Member):
+            raise MemberNotFound(argument)
+
         return result
 
 
@@ -297,6 +300,9 @@ class UserConverter(IDConverter[nextcord.User]):
                     result = await ctx.bot.fetch_user(user_id)
                 except nextcord.HTTPException:
                     raise UserNotFound(argument) from None
+
+            if not isinstance(result, nextcord.User):
+                raise UserNotFound(argument)
 
             return result
 

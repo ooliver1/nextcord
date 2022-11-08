@@ -1799,7 +1799,6 @@ class SlashCommandMixin(CallbackMixin):
             if interaction.data is None:
                 raise ValueError("Discord did not provide us interaction data")
 
-            # pyright does not want to lose typeddict specificity but we do not care here
             option_data = interaction.data.get("options")
 
             if not option_data:
@@ -2519,7 +2518,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: List[ApplicationCommandInteractionDataOption],
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]],
     ) -> None:
         """|coro|
         Calls the callback via the given :class:`Interaction`, using the given :class:`ConnectionState` to get resolved
@@ -2534,9 +2533,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         option_data: List[:class:`dict`]
             List of raw option data from Discord.
         """
-        if self.children:
+        if self.children and option_data is not None:
             await self.children[option_data[0]["name"]].call(
-                state, interaction, option_data[0].get("options", {})
+                state, interaction, option_data[0].get("options")
             )
         else:
             await self.call_slash(state, interaction, option_data)

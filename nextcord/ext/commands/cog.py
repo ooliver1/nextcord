@@ -44,6 +44,8 @@ from nextcord.application_command import ClientCog, _cog_special_method
 from ._types import _BaseCommand
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .bot import BotBase
     from .context import Context
     from .core import Command
@@ -205,7 +207,7 @@ class Cog(ClientCog, metaclass=CogMeta):
     __cog_commands__: ClassVar[List[Command]]
     __cog_listeners__: ClassVar[List[Tuple[str, str]]]
 
-    def __new__(cls: Type[CogT], *args: Any, **kwargs: Any) -> CogT:
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         # For issue 426, we need to store a copy of the command objects
         # since we modify them to inject `self` to them.
         # To do this, we need to interfere with the Cog creation process.
@@ -216,11 +218,7 @@ class Cog(ClientCog, metaclass=CogMeta):
         # r.e type ignore, type-checker complains about overriding a ClassVar
         self.__cog_commands__ = tuple(c._update_copy(cmd_attrs) for c in cls.__cog_commands__)  # type: ignore
 
-        lookup = {
-            cmd.qualified_name: cmd
-            for cmd in self.__cog_commands__
-            # pyright cannot read class annotations i guess
-        }
+        lookup = {cmd.qualified_name: cmd for cmd in self.__cog_commands__}  # pyright: ignore
 
         # Update the Command instances dynamically as well
         for command in self.__cog_commands__:
