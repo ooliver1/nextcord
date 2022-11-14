@@ -1049,15 +1049,71 @@ class VideoQualityMode(IntEnum):
 
 
 class ComponentType(IntEnum):
+    """Represents the type of a component.
+
+    .. versionadded:: 2.0
+
+    .. container:: operations
+
+        .. describe:: str(x)
+
+            Returns the name of the component type.
+
+        .. describe:: int(x)
+
+            Returns the value of the component type.
+
+        .. describe:: hash(x)
+
+            Returns the hash of the component type.
+
+        .. describe:: x == y
+
+            Checks if two component types are equal.
+
+        .. describe:: x != y
+
+            Checks if two component types are not equal.
+    """
+
     action_row = 1
+    """Represents the group component which holds different components in a row."""
+
     button = 2
+    """Represents a button component."""
+
     select = 3
+    """Alias for :attr:`.string_select`."""
+
     string_select = 3
+    """Represents a string select component."""
+
     text_input = 4
+    """Represents a text input component."""
+
     user_select = 5
+    """Represents a user select component.
+
+    .. versionadded:: 2.3
+    """
+
     role_select = 6
+    """Represents a role select component.
+
+    .. versionadded:: 2.3
+    """
+
     mentionable_select = 7
+    """Represents a mentionable select component.
+
+    .. versionadded:: 2.3
+    """
+
     channel_select = 8
+    """Represents a channel select component.
+
+    .. versionadded:: 2.3
+    """
 
 
 class ButtonStyle(IntEnum):

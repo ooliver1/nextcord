@@ -1267,48 +1267,8 @@ All enumerations are subclasses of :class:`enum.Enum`.
 .. autoclass:: InteractionResponseType()
     :members:
 
-.. class:: ComponentType
-
-    Represents the component type of a component.
-
-    .. versionadded:: 2.0
-
-    .. attribute:: action_row
-
-        Represents the group component which holds different components in a row.
-    .. attribute:: button
-
-        Represents a button component.
-    .. attribute:: select
-
-        Represents a string select component.
-    .. attribute:: text_input
-
-        Represents a text input component.
-    .. attribute:: user_select
-
-        Represents a user select component.
-
-        .. versionadded:: 2.3
-
-    .. attribute:: role_select
-
-        Represents a role select component.
-
-        .. versionadded:: 2.3
-
-    .. attribute:: mentionable_select
-
-        Represents a mentionable select component.
-
-        .. versionadded:: 2.3
-
-    .. attribute:: channel_select
-
-        Represents a channel select component.
-
-        .. versionadded:: 2.3
-
+.. autoclass:: ComponentType()
+    :members:
 
 .. class:: ButtonStyle
 
