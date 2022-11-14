@@ -158,18 +158,86 @@ class StrEnum(str, Enum):
 
 
 class ChannelType(IntEnum):
+    """Specifies the type of channel.
+
+    .. container:: operations
+
+        .. describe:: str(x)
+
+            Returns the name of the channel type.
+
+        .. describe:: int(x)
+
+            Returns the value of the channel type.
+
+        .. describe:: hash(x)
+
+            Returns the hash of the channel type.
+
+        .. describe:: x == y
+
+            Checks if two channel types are equal.
+
+        .. describe:: x != y
+
+            Checks if two channel types are not equal.
+    """
+
     text = 0
+    """A text channel."""
+
     private = 1
+    """A private text channel. Also called a direct message."""
+
     voice = 2
+    """A voice channel."""
+
     group = 3
+    """A private group text channel."""
+
     category = 4
+    """A category channel."""
+
     news = 5
+    """A guild news channel."""
+
     news_thread = 10
+    """"A news thread.
+
+    .. versionadded:: 2.0
+    """
+
     public_thread = 11
+    """A public thread.
+
+    .. versionadded:: 2.0
+    """
+
     private_thread = 12
+    """A private thread.
+
+    .. versionadded:: 2.0
+    """
+
     stage_voice = 13
+    """A guild stage voice channel.
+
+    .. versionadded:: 1.7
+    """
+
     guild_directory = 14
+    """A channel containing the guilds in a `Student Hub`_
+
+    .. _Student Hub: https://support.discord.com/hc/en-us/articles/4406046651927-Discord-Student-Hubs-FAQ
+
+    .. versionadded:: 2.2
+    """
+
     forum = 15
+    """A forum channel.
+
+    .. versionadded:: 2.1
+    """
 
     def __str__(self):
         return self.name
