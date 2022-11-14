@@ -1179,8 +1179,38 @@ class ButtonStyle(IntEnum):
 
 
 class TextInputStyle(IntEnum):
+    """Represents the style of a text input component.
+
+    .. versionadded:: 2.0
+
+    .. container:: operations
+
+        .. describe:: str(x)
+
+            Returns the name of the input style.
+
+        .. describe:: int(x)
+
+            Returns the value of the input style.
+
+        .. describe:: hash(x)
+
+            Returns the hash of the input style.
+
+        .. describe:: x == y
+
+            Checks if two input styles are equal.
+
+        .. describe:: x != y
+
+            Checks if two input styles are not equal.
+    """
+
     short = 1
+    """Represents a single line input."""
+
     paragraph = 2
+    """Represents a multi line input."""
 
 
 class StagePrivacyLevel(IntEnum):

@@ -1273,16 +1273,8 @@ All enumerations are subclasses of :class:`enum.Enum`.
 .. autoclass:: ButtonStyle()
     :members:
 
-.. class:: TextInputStyle
-
-    Represent the style of a text input component.
-
-    .. attribute:: short
-
-        Represent a single line input
-    .. attribute:: paragraph
-
-        Represent a multi line input
+.. autoclass:: TextInputStyle()
+    :members:
 
 .. class:: VoiceRegion
 
