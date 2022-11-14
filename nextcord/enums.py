@@ -1117,19 +1117,65 @@ class ComponentType(IntEnum):
 
 
 class ButtonStyle(IntEnum):
-    primary = 1
-    secondary = 2
-    success = 3
-    danger = 4
-    link = 5
+    """Represents the style of the button component.
 
-    # Aliases
+    .. versionadded:: 2.0
+
+    .. container:: operations
+
+        .. describe:: str(x)
+
+            Returns the name of the button style.
+
+        .. describe:: int(x)
+
+            Returns the value of the button style.
+
+        .. describe:: hash(x)
+
+            Returns the hash of the button style.
+
+        .. describe:: x == y
+
+            Checks if two button styles are equal.
+
+        .. describe:: x != y
+
+            Checks if two button styles are not equal.
+    """
+
+    primary = 1
+    """Represents a blurple button for the primary action."""
+
+    secondary = 2
+    """Represents a grey button for the secondary action."""
+
+    success = 3
+    """Represents a green button for a successful action."""
+
+    danger = 4
+    """Represents a red button for a dangerous action."""
+
+    link = 5
+    """Represents a link button."""
+
     blurple = 1
+    """An alias for :attr:`primary`."""
+
     grey = 2
+    """An alias for :attr:`secondary`."""
+
     gray = 2
+    """An alias for :attr:`secondary`."""
+
     green = 3
+    """An alias for :attr:`success`."""
+
     red = 4
+    """An alias for :attr:`danger`."""
+
     url = 5
+    """An alias for :attr:`link`."""
 
 
 class TextInputStyle(IntEnum):
