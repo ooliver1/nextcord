@@ -586,9 +586,59 @@ class VerificationLevel(IntEnum):
 
 
 class ContentFilter(IntEnum):
+    r"""Specifies a :class:`Guild`\'s explicit content filter, which is the machine
+    learning algorithms that Discord uses to detect if an image contains
+    pornography or otherwise explicit content.
+
+    .. versionadded:: 2.0
+
+    .. container:: operations
+
+        .. describe:: str(x)
+
+            Returns the name of the content filter.
+
+        .. describe:: int(x)
+
+            Returns the value of the content filter.
+
+        .. describe:: hash(x)
+
+            Returns the hash of the content filter.
+
+        .. describe:: x == y
+
+            Checks if two content filters are equal.
+
+        .. describe:: x != y
+
+            Checks if two content filters are not equal.
+
+        .. describe:: x > y
+
+            Checks if a content filter is higher than another.
+
+        .. describe:: x < y
+
+            Checks if a content filter is lower than another.
+
+        .. describe:: x >= y
+
+            Checks if a content filter is higher or equal to another.
+
+        .. describe:: x <= y
+
+            Checks if a content filter is lower or equal to another.
+    """
+
     disabled = 0
+    """The guild does not have the content filter enabled."""
+
     no_role = 1
+    """The guild has the content filter enabled for members without a role."""
+
     all_members = 2
+    """The guild has the content filter enabled for every member."""
 
     def __str__(self):
         return self.name

@@ -1285,44 +1285,8 @@ All enumerations are subclasses of :class:`enum.Enum`.
 .. autoclass:: NotificationLevel()
     :members:
 
-.. class:: ContentFilter
-
-    Specifies a :class:`Guild`\'s explicit content filter, which is the machine
-    learning algorithms that Discord uses to detect if an image contains
-    pornography or otherwise explicit content.
-
-    .. container:: operations
-
-        .. versionadded:: 2.0
-
-        .. describe:: x == y
-
-            Checks if two content filter levels are equal.
-        .. describe:: x != y
-
-            Checks if two content filter levels are not equal.
-        .. describe:: x > y
-
-            Checks if a content filter level is higher than another.
-        .. describe:: x < y
-
-            Checks if a content filter level is lower than another.
-        .. describe:: x >= y
-
-            Checks if a content filter level is higher or equal to another.
-        .. describe:: x <= y
-
-            Checks if a content filter level is lower or equal to another.
-
-    .. attribute:: disabled
-
-        The guild does not have the content filter enabled.
-    .. attribute:: no_role
-
-        The guild has the content filter enabled for members without a role.
-    .. attribute:: all_members
-
-        The guild has the content filter enabled for every member.
+.. autoclass:: ContentFilter()
+    :members:
 
 .. class:: Status
 
