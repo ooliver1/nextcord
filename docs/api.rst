@@ -1282,39 +1282,8 @@ All enumerations are subclasses of :class:`enum.Enum`.
 .. autoclass:: VerificationLevel()
     :members:
 
-.. class:: NotificationLevel
-
-    Specifies whether a :class:`Guild` has notifications on for all messages or mentions only by default.
-
-    .. container:: operations
-
-        .. versionadded:: 2.0
-
-        .. describe:: x == y
-
-            Checks if two notification levels are equal.
-        .. describe:: x != y
-
-            Checks if two notification levels are not equal.
-        .. describe:: x > y
-
-            Checks if a notification level is higher than another.
-        .. describe:: x < y
-
-            Checks if a notification level is lower than another.
-        .. describe:: x >= y
-
-            Checks if a notification level is higher or equal to another.
-        .. describe:: x <= y
-
-            Checks if a notification level is lower or equal to another.
-
-    .. attribute:: all_messages
-
-        Members receive notifications for every message regardless of them being mentioned.
-    .. attribute:: only_mentions
-
-        Members receive notifications for messages they are mentioned in.
+.. autoclass:: NotificationLevel()
+    :members:
 
 .. class:: ContentFilter
 
