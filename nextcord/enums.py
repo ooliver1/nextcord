@@ -645,12 +645,47 @@ class ContentFilter(IntEnum):
 
 
 class Status(StrEnum):
+    """Specifies a :class:`Member`\'s status.
+
+    .. container:: operations
+
+        .. describe:: str(x)
+
+            Returns the value of the status.
+
+        .. describe:: hash(x)
+
+            Returns the hash of the status.
+
+        .. describe:: x == y
+
+            Checks if two statuss are equal.
+
+        .. describe:: x != y
+
+            Checks if two statuss are not equal.
+    """
+
     online = "online"
+    """The member is online."""
+
     offline = "offline"
+    """The member is offline."""
+
     idle = "idle"
+    """The member is idle."""
+
     dnd = "dnd"
+    """The member is "Do Not Disturb"."""
+
     do_not_disturb = "dnd"
+    """An alias for :attr:`dnd`."""
+
     invisible = "invisible"
+    """The member is "invisible". In reality, this is only used in sending
+    a presence via :meth:`Client.change_presence`. When you receive a
+    user's presence this will be :attr:`offline` instead.
+    """
 
 
 class DefaultAvatar(IntEnum):

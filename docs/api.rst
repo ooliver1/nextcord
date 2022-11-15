@@ -1288,31 +1288,8 @@ All enumerations are subclasses of :class:`enum.Enum`.
 .. autoclass:: ContentFilter()
     :members:
 
-.. class:: Status
-
-    Specifies a :class:`Member` 's status.
-
-    .. attribute:: online
-
-        The member is online.
-    .. attribute:: offline
-
-        The member is offline.
-    .. attribute:: idle
-
-        The member is idle.
-    .. attribute:: dnd
-
-        The member is "Do Not Disturb".
-    .. attribute:: do_not_disturb
-
-        An alias for :attr:`dnd`.
-    .. attribute:: invisible
-
-        The member is "invisible". In reality, this is only used in sending
-        a presence a la :meth:`Client.change_presence`. When you receive a
-        user's presence this will be :attr:`offline` instead.
-
+.. autoclass:: Status()
+    :members:
 
 .. class:: AuditLogAction
 
