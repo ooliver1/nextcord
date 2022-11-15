@@ -517,11 +517,69 @@ class SpeakingState(IntEnum):
 
 
 class VerificationLevel(IntEnum):
+    r"""Specifies a :class:`Guild`\'s verification level, which is the criteria in
+    which a member must meet before being able to send messages to the guild.
+
+    .. versionadded:: 2.0
+
+    .. container:: operations
+
+        .. describe:: str(x)
+
+            Returns the name of the verification level.
+
+        .. describe:: int(x)
+
+            Returns the value of the verification level.
+
+        .. describe:: hash(x)
+
+            Returns the hash of the verification level.
+
+        .. describe:: x == y
+
+            Checks if two verification levels are equal.
+
+        .. describe:: x != y
+
+            Checks if two verification levels are not equal.
+
+        .. describe:: x > y
+
+            Checks if a verification level is higher than another.
+
+        .. describe:: x < y
+
+            Checks if a verification level is lower than another.
+
+        .. describe:: x >= y
+
+            Checks if a verification level is higher or equal to another.
+
+        .. describe:: x <= y
+
+            Checks if a verification level is lower or equal to another.
+    """
+
     none = 0
+    """No criteria set."""
+
     low = 1
+    """Member must have a verified email on their Discord account."""
+
     medium = 2
+    """Member must have a verified email and be registered on Discord for more
+    than five minutes.
+    """
+
     high = 3
+    """Member must have a verified email, be registered on Discord for more
+    than five minutes, and be a member of the guild itself for more than
+    ten minutes.
+    """
+
     highest = 4
+    """Member must have a verified phone on their Discord account."""
 
     def __str__(self):
         return self.name
