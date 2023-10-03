@@ -244,3 +244,15 @@ class EditApplicationCommand(TypedDict):
     description: NotRequired[str]
     options: NotRequired[Optional[List[ApplicationCommandOption]]]
     type: NotRequired[ApplicationCommandType]
+
+
+class CreateApplicationCommand(TypedDict):
+    name: str
+    name_localizations: NotRequired[Optional[Dict[str, str]]]
+    description: NotRequired[str]
+    description_localizations: NotRequired[Optional[Dict[str, str]]]
+    options: NotRequired[List[ApplicationCommandOption]]
+    default_member_permissions: NotRequired[Optional[str]]
+    dm_permission: NotRequired[bool]
+    type: NotRequired[ApplicationCommandType]
+    nsfw: NotRequired[bool]
