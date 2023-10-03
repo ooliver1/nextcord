@@ -433,7 +433,7 @@ class HTTPClient:
             Route("POST", "/users/{user_id}/channels", user_id=user_id), json=payload
         )
 
-    def leave_group(self, channel_id) -> Response[None]:
+    def leave_group(self, channel_id: int) -> Response[None]:
         return self.request(Route("DELETE", "/channels/{channel_id}", channel_id=channel_id))
 
     # Message management
