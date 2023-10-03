@@ -182,7 +182,7 @@ class Interaction(Hashable, Generic[ClientT]):
         self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
         # TODO: this is so janky, accessing a hidden double attribute
         self._original_message: Optional[InteractionMessage] = None
-        self.attached = InteractionAttached()
+        self.attached: InteractionAttached = InteractionAttached()
         self.application_command: Optional[
             Union[SlashApplicationSubcommand, BaseApplicationCommand]
         ] = None
@@ -570,7 +570,7 @@ class Interaction(Hashable, Generic[ClientT]):
             suppress_embeds=suppress_embeds,
         )
 
-    async def edit(self, *args, **kwargs) -> Optional[Message]:
+    async def edit(self, *args: Any, **kwargs: Any) -> Optional[Message]:
         """|coro|
 
         This is a shorthand function for helping in editing messages in
@@ -625,8 +625,8 @@ class InteractionResponse:
         "_parent",
     )
 
-    def __init__(self, parent: Interaction) -> None:
-        self._parent: Interaction = parent
+    def __init__(self, parent: Interaction[Any]) -> None:
+        self._parent: Interaction[Any] = parent
         self._responded: bool = False
 
     def is_done(self) -> bool:
@@ -713,7 +713,9 @@ class InteractionResponse:
             )
             self._responded = True
 
-    async def send_autocomplete(self, choices: Union[dict, list]) -> None:
+    async def send_autocomplete(
+        self, choices: Union[Dict[str, Union[str, float]], List[str]]
+    ) -> None:
         """|coro|
 
         Responds to this interaction by sending an autocomplete payload.
@@ -1091,7 +1093,7 @@ class InteractionResponse:
 class _InteractionMessageState:
     __slots__ = ("_parent", "_interaction")
 
-    def __init__(self, interaction: Interaction, parent: ConnectionState) -> None:
+    def __init__(self, interaction: Interaction[Any], parent: ConnectionState) -> None:
         self._interaction: Interaction = interaction
         self._parent: ConnectionState = parent
 
