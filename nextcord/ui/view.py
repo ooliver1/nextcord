@@ -148,10 +148,10 @@ class View:
     """
 
     __discord_ui_view__: ClassVar[bool] = True
-    __view_children_items__: ClassVar[List[ItemCallbackType]] = []
+    __view_children_items__: ClassVar[List[ItemCallbackType[Any, Any]]] = []
 
     def __init_subclass__(cls) -> None:
-        children: List[ItemCallbackType] = []
+        children: List[ItemCallbackType[Any, Any]] = []
         for base in reversed(cls.__mro__):
             children.extend(
                 member
@@ -171,10 +171,10 @@ class View:
         auto_defer: bool = True,
         prevent_update: bool = True,
     ) -> None:
-        self.timeout = timeout
-        self.auto_defer = auto_defer
-        self.prevent_update = True if timeout else prevent_update
-        self.children: List[Item] = []
+        self.timeout: Optional[float] = timeout
+        self.auto_defer: bool = auto_defer
+        self.prevent_update: bool = True if timeout else prevent_update
+        self.children: List[Item[Self]] = []
         for func in self.__view_children_items__:
             item: Item = func.__discord_ui_model_type__(**func.__discord_ui_model_kwargs__)
             item.callback = partial(func, self, item)  # type: ignore
@@ -299,7 +299,7 @@ class View:
         item._view = self
         self.children.append(item)
 
-    def remove_item(self, item: Item) -> None:
+    def remove_item(self, item: Item[Self]) -> None:
         """Removes an item from the view.
 
         Parameters
@@ -354,7 +354,7 @@ class View:
         A callback that is called when a view's timeout elapses without being explicitly stopped.
         """
 
-    async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
+    async def on_error(self, error: Exception, item: Item[Self], interaction: Interaction) -> None:
         """|coro|
 
         A callback that is called when an item's callback or :meth:`interaction_check`
