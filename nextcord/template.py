@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from .file import File
     from .message import Attachment
     from .state import ConnectionState
-    from .types.template import Template as TemplatePayload
+    from .types.template import EditTemplate, Template as TemplatePayload
     from .user import User
 
 
@@ -265,7 +265,7 @@ class Template:
         :class:`Template`
             The newly edited template.
         """
-        payload = {}
+        payload: EditTemplate = {}
 
         if name is not MISSING:
             payload["name"] = name
