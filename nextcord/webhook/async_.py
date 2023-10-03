@@ -50,6 +50,8 @@ _log = logging.getLogger(__name__)
 if TYPE_CHECKING:
     import datetime
 
+    from typing_extensions import Self
+
     from ..abc import Snowflake
     from ..channel import TextChannel
     from ..embeds import Embed
@@ -71,7 +73,7 @@ class AsyncDeferredLock:
         self.lock = lock
         self.delta: Optional[float] = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
         await self.lock.acquire()
         return self
 
