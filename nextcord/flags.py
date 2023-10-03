@@ -97,7 +97,7 @@ class BaseFlags:
     __slots__ = ("value",)
 
     def __init__(self, **kwargs: bool) -> None:
-        self.value = self.DEFAULT_VALUE
+        self.value: int = self.DEFAULT_VALUE
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
                 raise TypeError(f"{key!r} is not a valid flag name.")
@@ -612,7 +612,7 @@ class Intents(BaseFlags):
     __slots__ = ()
 
     def __init__(self, **kwargs: bool) -> None:
-        self.value = self.DEFAULT_VALUE
+        self.value: int = self.DEFAULT_VALUE
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
                 raise TypeError(f"{key!r} is not a valid flag name.")
@@ -1163,7 +1163,7 @@ class MemberCacheFlags(BaseFlags):
 
     def __init__(self, **kwargs: bool) -> None:
         bits = max(self.VALID_FLAGS.values()).bit_length()
-        self.value = (1 << bits) - 1
+        self.value: int = (1 << bits) - 1
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
                 raise TypeError(f"{key!r} is not a valid flag name.")
