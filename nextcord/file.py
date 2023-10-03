@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import io
 import os
-from typing import TYPE_CHECKING, Optional, Union
+import types
+from typing import TYPE_CHECKING, Optional, Type, Union
 
 __all__ = ("File",)
 
@@ -101,7 +102,7 @@ class File:
 
     def __init__(
         self,
-        fp: Union[str, bytes, os.PathLike, io.BufferedIOBase],
+        fp: Union[str, bytes, os.PathLike[str], os.PathLike[bytes], io.BufferedIOBase],
         filename: Optional[str] = None,
         *,
         description: Optional[str] = None,
@@ -152,7 +153,12 @@ class File:
             self.force_close = True
         return self
 
-    def __exit__(self, *_) -> None:
+    def __exit__(
+        self,
+        _exc_type: Optional[Type[BaseException]],
+        _exc_val: Optional[BaseException],
+        _exc_tb: Optional[types.TracebackType],
+    ) -> None:
         self.close()
 
     def reset(self, *, seek: Union[int, bool] = True) -> None:
