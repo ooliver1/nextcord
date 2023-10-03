@@ -4,10 +4,10 @@ from typing import List, Literal, Optional, TypedDict
 
 from typing_extensions import NotRequired
 
-from .activity import PartialPresenceUpdate
+from .activity import PartialPresenceUpdate, PresenceUpdate
 from .channel import GuildChannel
 from .emoji import Emoji
-from .member import Member
+from .member import Member, MemberWithUser
 from .role import Role
 from .scheduled_events import ScheduledEvent
 from .snowflake import Snowflake
@@ -148,3 +148,79 @@ class ChannelPositionUpdate(TypedDict):
 class RolePositionUpdate(TypedDict):
     id: Snowflake
     position: NotRequired[Optional[Snowflake]]
+
+
+GatewayGuildUpdate = Guild
+GatewayGuildDelete = UnavailableGuild
+
+
+class GatewayGuildBanAdd(TypedDict):
+    guild_id: Snowflake
+    user: User
+
+
+class GatewayGuildBanRemove(TypedDict):
+    guild_id: Snowflake
+    user: User
+
+
+class GatewayGuildEmojisUpdate(TypedDict):
+    guild_id: Snowflake
+    emojis: List[Emoji]
+
+
+class GatewayGuildStickersUpdate(TypedDict):
+    guild_id: Snowflake
+    stickers: List[GuildSticker]
+
+
+class GatewayGuildIntegrationsUpdate(TypedDict):
+    guild_id: Snowflake
+
+
+class GatewayGuildMemberAdd(MemberWithUser):
+    guild_id: Snowflake
+
+
+class GatewayGuildMemberRemove(TypedDict):
+    guild_id: Snowflake
+    user: User
+
+
+class GatewayGuildMemberUpdate(TypedDict):
+    guild_id: Snowflake
+    roles: List[Snowflake]
+    user: User
+    nick: NotRequired[Optional[str]]
+    avatar: Optional[str]
+    joined_at: Optional[str]
+    premium_since: NotRequired[Optional[str]]
+    deaf: NotRequired[bool]
+    mute: NotRequired[bool]
+    pending: NotRequired[bool]
+    communication_disabled_until: NotRequired[Optional[str]]
+
+
+class GatewayGuildMembersChunk(TypedDict):
+    guild_id: Snowflake
+    members: List[Member]
+    chunk_index: int
+    chunk_count: int
+    not_found: NotRequired[List[Snowflake]]
+    presences: NotRequired[List[PresenceUpdate]]
+    nonce: NotRequired[str]
+
+
+class GatewayGuildRoleCreate(TypedDict):
+    guild_id: Snowflake
+    role: Role
+
+
+class GatewayGuildRoleUpdate(TypedDict):
+    guild_id: Snowflake
+    role: Role
+
+
+class GatewayGuildRoleDelete(TypedDict):
+    guild_id: Snowflake
+    role_id: Snowflake

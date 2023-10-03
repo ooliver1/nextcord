@@ -40,3 +40,20 @@ class ScheduledEventUser(TypedDict):
     guild_scheduled_event_id: Snowflake
     user: User
     member: Member
+
+
+class GatewayScheduledEventUserAdd(TypedDict):
+    guild_scheduled_event_id: Snowflake
+    user_id: Snowflake
+    guild_id: Snowflake
+
+
+class GatewayScheduledEventUserRemove(TypedDict):
+    guild_scheduled_event_id: Snowflake
+    user_id: Snowflake
+    guild_id: Snowflake
+
+
+GatewayScheduledEventCreate = ScheduledEvent
+GatewayScheduledEventUpdate = ScheduledEvent
+GatewayScheduledEventDelete = ScheduledEvent

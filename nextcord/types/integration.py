@@ -58,3 +58,28 @@ class BotIntegration(BaseIntegration):
 
 
 Integration = Union[BaseIntegration, StreamIntegration, BotIntegration]
+
+
+class GatewayBaseIntegrationCreate(BaseIntegration):
+    guild_id: Snowflake
+
+
+class GatewayStreamIntegrationCreate(BaseIntegration):
+    guild_id: Snowflake
+
+
+class GatewayBotIntegrationCreate(BaseIntegration):
+    guild_id: Snowflake
+
+
+GatewayIntegrationCreate = Union[
+    GatewayBaseIntegrationCreate, GatewayBaseIntegrationCreate, GatewayBotIntegrationCreate
+]
+# IntegrationUpdate is identical right now - 2023-10-03
+GatewayIntegrationUpdate = GatewayIntegrationCreate
+
+
+class GatewayIntegrationDelete(TypedDict):
+    id: Snowflake
+    guild_id: Snowflake
+    application_id: NotRequired[Snowflake]

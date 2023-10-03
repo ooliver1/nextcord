@@ -11,7 +11,7 @@ from .components import Component
 from .embed import Embed
 from .emoji import PartialEmoji
 from .interactions import MessageInteraction
-from .member import Member, UserWithMember
+from .member import Member, MemberWithUser, UserWithMember
 from .snowflake import Snowflake, SnowflakeList
 from .sticker import StickerItem
 from .user import User
@@ -110,3 +110,50 @@ class AllowedMentions(TypedDict):
     roles: SnowflakeList
     users: SnowflakeList
     replied_user: bool
+
+
+GatewayMessageCreate = Message
+GatewayMessageUpdate = GatewayMessageCreate
+
+
+class GatewayMessageDelete(TypedDict):
+    id: Snowflake
+    channel_id: Snowflake
+    guild_id: NotRequired[Snowflake]
+
+
+class GatewayMessageDeleteBulk(TypedDict):
+    ids: SnowflakeList
+    channel_id: Snowflake
+    guild_id: NotRequired[Snowflake]
+
+
+class GatewayMessageReactionAdd(TypedDict):
+    user_id: Snowflake
+    channel_id: Snowflake
+    message_id: Snowflake
+    guild_id: NotRequired[Snowflake]
+    member: NotRequired[MemberWithUser]
+    emoji: PartialEmoji
+    message_author_id: NotRequired[Snowflake]
+
+
+class GatewayMessageReactionRemove(TypedDict):
+    user_id: Snowflake
+    channel_id: Snowflake
+    message_id: Snowflake
+    guild_id: NotRequired[Snowflake]
+    emoji: PartialEmoji
+
+
+class GatewayMessageReactionRemoveAll(TypedDict):
+    channel_id: Snowflake
+    message_id: Snowflake
+    guest_id: NotRequired[Snowflake]
+
+
+class GatewayMessageReactionRemoveEmoji(TypedDict):
+    channel_id: Snowflake
+    guild_id: NotRequired[Snowflake]
+    message_id: Snowflake
+    emoji: PartialEmoji

@@ -25,11 +25,11 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.auto_moderation import (
         AutoModerationAction as AutoModerationActionPayload,
-        AutoModerationActionExecution as ActionExecutionPayload,
         AutoModerationActionMetadata as ActionMetadataPayload,
         AutoModerationRule as AutoModerationRulePayload,
         AutoModerationRuleModify,
         AutoModerationTriggerMetadata as TriggerMetadataPayload,
+        GatewayAutoModerationActionExecution as ActionExecutionPayload,
     )
 
 __all__ = (
@@ -37,7 +37,7 @@ __all__ = (
     "AutoModerationActionMetadata",
     "AutoModerationAction",
     "AutoModerationRule",
-    "AutoModerationActionExecution",
+    "GatewayAutoModerationActionExecution",
 )
 
 
@@ -511,7 +511,7 @@ class AutoModerationRule(Hashable):
         return AutoModerationRule(data=data, state=self._state)
 
 
-class AutoModerationActionExecution:
+class GatewayAutoModerationActionExecution:
     """Represents the execution of an auto moderation action
 
     .. versionadded:: 2.1

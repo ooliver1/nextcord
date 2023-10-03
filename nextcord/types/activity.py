@@ -7,17 +7,24 @@ from typing import List, Literal, Optional, TypedDict
 from typing_extensions import NotRequired
 
 from .snowflake import Snowflake
-from .user import PartialUser
+from .user import PartialUser, User
 
 StatusType = Literal["idle", "dnd", "online", "offline"]
 
 
-class PartialPresenceUpdate(TypedDict):
-    user: PartialUser
+class _PresenceUpdate(TypedDict):
     guild_id: Snowflake
     status: StatusType
     activities: List[Activity]
     client_status: ClientStatus
+
+
+class PartialPresenceUpdate(_PresenceUpdate):
+    user: PartialUser
+
+
+class PresenceUpdate(_PresenceUpdate):
+    user: User
 
 
 class ClientStatus(TypedDict, total=False):

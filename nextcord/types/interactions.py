@@ -73,6 +73,9 @@ class ApplicationCommandPermissions(TypedDict):
     permission: bool
 
 
+GatewayApplicationCommandPermissionsUpdate = ApplicationCommandPermissions
+
+
 class BaseGuildApplicationCommandPermissions(TypedDict):
     permissions: List[ApplicationCommandPermissions]
 
@@ -86,7 +89,7 @@ class GuildApplicationCommandPermissions(PartialGuildApplicationCommandPermissio
     guild_id: Snowflake
 
 
-InteractionType = Literal[1, 2, 3]
+InteractionType = Literal[1, 2, 3, 4, 5]
 
 
 class _ApplicationCommandInteractionDataOptionSubcommand(TypedDict):
@@ -256,3 +259,6 @@ class CreateApplicationCommand(TypedDict):
     dm_permission: NotRequired[bool]
     type: NotRequired[ApplicationCommandType]
     nsfw: NotRequired[bool]
+
+
+GatewayInteractionCreate = Interaction

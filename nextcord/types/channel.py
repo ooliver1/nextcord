@@ -7,8 +7,9 @@ from typing import List, Literal, Optional, TypedDict, Union
 from typing_extensions import NotRequired
 
 from .emoji import DefaultReaction
+from .member import MemberWithUser
 from .snowflake import Snowflake
-from .threads import ThreadArchiveDuration, ThreadMember, ThreadMetadata
+from .threads import Thread, ThreadArchiveDuration, ThreadMember
 from .user import PartialUser
 
 OverwriteType = Literal[0, 1]
@@ -98,21 +99,6 @@ class StageChannel(_BaseGuildChannel):
     topic: NotRequired[str]
 
 
-class ThreadChannel(_BaseChannel):
-    type: Literal[10, 11, 12]
-    guild_id: Snowflake
-    parent_id: Snowflake
-    owner_id: Snowflake
-    nsfw: bool
-    last_message_id: Optional[Snowflake]
-    rate_limit_per_user: int
-    message_count: int
-    member_count: int
-    thread_metadata: ThreadMetadata
-    member: NotRequired[ThreadMember]
-    last_pin_timestamp: NotRequired[str]
-
-
 GuildChannel = Union[
     TextChannel,
     ForumChannel,
@@ -120,7 +106,7 @@ GuildChannel = Union[
     VoiceChannel,
     CategoryChannel,
     StageChannel,
-    ThreadChannel,
+    Thread,
 ]
 
 
@@ -156,3 +142,49 @@ class ForumTag(TypedDict):
     moderated: bool
     emoji_id: NotRequired[Optional[Snowflake]]
     emoji_name: NotRequired[Optional[str]]
+
+
+GatewayChannelCreate = Channel
+GatewayChannelUpdate = Channel
+GatewayChannelDelete = Channel
+GatewayThreadCreate = Thread
+GatewayThreadUpdate = Thread
+GatewayThreadDelete = Thread
+
+
+class GatewayThreadListSync(TypedDict):
+    guild_id: Snowflake
+    channel_ids: List[Snowflake]
+    threads: List[Thread]
+    members: List[ThreadMember]
+
+
+class GatewayThreadMemberUpdate(ThreadMember):
+    guild_id: Snowflake
+
+
+class GatewayThreadMembersUpdate(TypedDict):
+    id: Snowflake
+    guild_id: Snowflake
+    member_count: int
+    added_members: NotRequired[List[ThreadMember]]
+    removed_member_ids: NotRequired[List[Snowflake]]
+
+
+class GatewayChannelPinsUpdate(TypedDict):
+    guild_id: NotRequired[Snowflake]
+    channel_id: Snowflake
+    last_pin_timestamp: NotRequired[Optional[str]]
+
+
+class GatewayTypingStart(TypedDict):
+    channel_id: Snowflake
+    guild_id: NotRequired[Snowflake]
+    user_id: Snowflake
+    timestamp: int
+    member: NotRequired[MemberWithUser]
+
+
+GatewayStageInstanceCreate = StageInstance
+GatewayStageInstanceUpdate = StageInstance
+GatewayStageInstanceDelete = StageInstance

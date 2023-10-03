@@ -66,7 +66,12 @@ class AutoModerationRuleModify(TypedDict, total=False):
     exempt_channels: List[Snowflake]
 
 
-class AutoModerationActionExecution(TypedDict):
+GatewayAutoModerationRuleCreate = AutoModerationRule
+GatewayAutoModerationRuleUpdate = AutoModerationRule
+GatewayAutoModerationRuleDelete = AutoModerationRule
+
+
+class GatewayAutoModerationActionExecution(TypedDict):
     guild_id: Snowflake
     action: AutoModerationAction
     rule_id: Snowflake

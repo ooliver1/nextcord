@@ -310,3 +310,7 @@ class AuditLog(TypedDict):
     integrations: List[PartialIntegration]
     threads: List[Thread]
     auto_moderation_rules: List[AutoModerationRule]
+
+
+class GatewayGuildAuditLogEntryCreate(AuditLogEntry):
+    guild_id: Snowflake

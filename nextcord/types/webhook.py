@@ -47,3 +47,8 @@ class _FullWebhook(TypedDict, total=False):
 
 class Webhook(PartialWebhook, _FullWebhook):
     ...
+
+
+class GatewayWebhooksUpdate(TypedDict):
+    guild_id: Snowflake
+    channel_id: Snowflake

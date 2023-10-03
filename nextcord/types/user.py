@@ -26,3 +26,6 @@ class User(PartialUser, total=False):
     premium_type: PremiumType
     public_flags: int
     global_name: Optional[str]
+
+
+GatewayUserUpdate = User

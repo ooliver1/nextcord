@@ -10,6 +10,8 @@ import sys
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
+from nextcord.types.guild import GatewayGuildMemberUpdate
+
 from . import abc, utils
 from .activity import ActivityTypes, create_activity
 from .asset import Asset
@@ -268,7 +270,11 @@ class Member(abc.Messageable, _UserTag):
         accent_colour: Optional[Colour]
 
     def __init__(
-        self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
+        self,
+        *,
+        data: Union[MemberWithUserPayload, GatewayGuildMemberUpdate],
+        guild: Guild,
+        state: ConnectionState,
     ) -> None:
         self._state: ConnectionState = state
         self._user: User = state.store_user(data["user"])
@@ -360,7 +366,7 @@ class Member(abc.Messageable, _UserTag):
     async def _get_channel(self):
         return await self.create_dm()
 
-    def _update(self, data: MemberPayload) -> None:
+    def _update(self, data: Union[MemberPayload, GatewayGuildMemberUpdate]) -> None:
         # the nickname change is optional,
         # if it isn't in the payload then it didn't change
         with contextlib.suppress(KeyError):

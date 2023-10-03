@@ -22,6 +22,8 @@ from typing import (
     overload,
 )
 
+from nextcord.types.message import GatewayMessageReactionRemove
+
 from . import utils
 from .components import _component_factory
 from .embeds import Embed
@@ -903,7 +905,10 @@ class Message(Hashable):
         return reaction
 
     def _remove_reaction(
-        self, data: ReactionPayload, emoji: EmojiInputType, user_id: int
+        self,
+        data: Union[ReactionPayload, GatewayMessageReactionRemove],
+        emoji: EmojiInputType,
+        user_id: int,
     ) -> Reaction:
         reaction = utils.find(lambda r: r.emoji == emoji, self.reactions)
 

@@ -60,3 +60,6 @@ class VoiceReady(TypedDict):
     port: int
     modes: List[SupportedModes]
     heartbeat_interval: int
+
+
+GatewayVoiceStateUpdate = GuildVoiceState
