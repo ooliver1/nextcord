@@ -87,7 +87,7 @@ class Permissions(BaseFlags):
                 f"Expected int parameter, received {permissions.__class__.__name__} instead."
             )
 
-        self.value = permissions
+        self.value: int = permissions
         for key, value in kwargs.items():
             if key not in self.VALID_FLAGS:
                 raise TypeError(f"{key!r} is not a valid permission name.")
