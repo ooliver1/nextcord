@@ -2436,7 +2436,7 @@ class AutoShardedConnectionState(ConnectionState):
             except KeyError:
                 pass
             else:
-                self.application_id = utils.get_as_snowflake(application, "id")
+                self.application_id: Optional[int] = utils.get_as_snowflake(application, "id")
                 self.application_flags: ApplicationFlags = ApplicationFlags._from_value(
                     application["flags"]
                 )
