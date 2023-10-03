@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from ..embeds import Embed
     from ..file import File
     from ..mentions import AllowedMentions
+    from ..types.message import Message as MessagePayload
     from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
 
@@ -208,7 +209,7 @@ class WebhookAdapter:
         token: Optional[str] = None,
         session: Session,
         reason: Optional[str] = None,
-    ):
+    ) -> None:
         route = Route("DELETE", "/webhooks/{webhook_id}", webhook_id=webhook_id)
         return self.request(route, session, reason=reason, auth_token=token)
 
@@ -219,7 +220,7 @@ class WebhookAdapter:
         *,
         session: Session,
         reason: Optional[str] = None,
-    ):
+    ) -> None:
         route = Route(
             "DELETE",
             "/webhooks/{webhook_id}/{webhook_token}",
@@ -236,7 +237,7 @@ class WebhookAdapter:
         *,
         session: Session,
         reason: Optional[str] = None,
-    ):
+    ) -> WebhookPayload:
         route = Route("PATCH", "/webhooks/{webhook_id}", webhook_id=webhook_id)
         return self.request(route, session, reason=reason, payload=payload, auth_token=token)
 
@@ -248,7 +249,7 @@ class WebhookAdapter:
         *,
         session: Session,
         reason: Optional[str] = None,
-    ):
+    ) -> WebhookPayload:
         route = Route(
             "PATCH",
             "/webhooks/{webhook_id}/{webhook_token}",
@@ -268,7 +269,7 @@ class WebhookAdapter:
         files: Optional[List[File]] = None,
         thread_id: Optional[int] = None,
         wait: bool = False,
-    ):
+    ) -> Optional[MessagePayload]:
         params = {"wait": int(wait)}
         if thread_id:
             params["thread_id"] = thread_id
@@ -289,7 +290,7 @@ class WebhookAdapter:
         message_id: int,
         *,
         session: Session,
-    ):
+    ) -> MessagePayload:
         route = Route(
             "GET",
             "/webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
@@ -309,7 +310,7 @@ class WebhookAdapter:
         payload: Optional[Dict[str, Any]] = None,
         multipart: Optional[List[Dict[str, Any]]] = None,
         files: Optional[List[File]] = None,
-    ):
+    ) -> MessagePayload:
         route = Route(
             "PATCH",
             "/webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
@@ -326,7 +327,7 @@ class WebhookAdapter:
         message_id: int,
         *,
         session: Session,
-    ):
+    ) -> None:
         route = Route(
             "DELETE",
             "/webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
@@ -342,7 +343,7 @@ class WebhookAdapter:
         token: str,
         *,
         session: Session,
-    ):
+    ) -> WebhookPayload:
         route = Route("GET", "/webhooks/{webhook_id}", webhook_id=webhook_id)
         return self.request(route, session=session, auth_token=token)
 
@@ -352,7 +353,7 @@ class WebhookAdapter:
         token: str,
         *,
         session: Session,
-    ):
+    ) -> WebhookPayload:
         route = Route(
             "GET",
             "/webhooks/{webhook_id}/{webhook_token}",
