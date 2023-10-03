@@ -24,6 +24,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    cast,
 )
 
 from . import utils
@@ -178,6 +179,7 @@ class ConnectionState:
         self.shard_count: Optional[int] = None
         self._ready_task: Optional[asyncio.Task] = None
         self.application_id: Optional[int] = application_id
+        self.user: Optional[ClientUser] = None
         self.heartbeat_timeout: float = heartbeat_timeout
         self.guild_ready_timeout: float = guild_ready_timeout
         if self.guild_ready_timeout < 0:
@@ -253,7 +255,7 @@ class ConnectionState:
         self.clear()
 
     def clear(self, *, views: bool = True, modals: bool = True) -> None:
-        self.user: Optional[ClientUser] = None
+        self.user = None
         # Originally, this code used WeakValueDictionary to maintain references to the
         # global user mapping.
 
@@ -1393,7 +1395,7 @@ class ConnectionState:
 
     def parse_user_update(self, data) -> None:
         # self.user is *always* cached when this is called
-        user: ClientUser = self.user  # type: ignore
+        user = cast(ClientUser, self.user)
         user._update(data)
         ref = self._users.get(user.id)
         if ref:
@@ -2313,6 +2315,7 @@ class AutoShardedConnectionState(ConnectionState):
         super().__init__(*args, **kwargs)
         self.shard_ids: Union[List[int], range] = []
         self.shards_launched: asyncio.Event = asyncio.Event()
+        self.user: Optional[ClientUser] = None
 
     def _update_message_references(self) -> None:
         # self._messages won't be None when this is called
