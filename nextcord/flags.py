@@ -41,7 +41,7 @@ BF = TypeVar("BF", bound="BaseFlags")
 
 class flag_value:
     def __init__(self, func: Callable[[Any], int]) -> None:
-        self.flag = func(None)
+        self.flag: int = func(None)
         self.__doc__ = func.__doc__
 
     @overload
@@ -68,8 +68,8 @@ class alias_flag_value(flag_value):
     pass
 
 
-def fill_with_flags(*, inverted: bool = False):
-    def decorator(cls: Type[BF]):
+def fill_with_flags(*, inverted: bool = False) -> Callable[[Type[BF]], Type[BF]]:
+    def decorator(cls: Type[BF]) -> Type[BF]:
         cls.VALID_FLAGS = {
             name: value.flag
             for name, value in cls.__dict__.items()
