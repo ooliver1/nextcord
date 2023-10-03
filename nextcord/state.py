@@ -146,7 +146,7 @@ class ConnectionState:
     if TYPE_CHECKING:
         _get_websocket: Callable[..., DiscordWebSocket]
         _get_client: Callable[..., Client]
-        _parsers: Dict[str, Callable[[Dict[str, Any]], None]]
+        parsers: Dict[str, Callable[[Dict[str, Any]], None]]
 
     def __init__(
         self,
@@ -247,6 +247,7 @@ class ConnectionState:
             self.store_user = self.create_user
             self.deref_user = self.deref_user_no_intents
 
+        parsers: Dict[str, Callable[[Dict[str, Any]], None]]
         self.parsers = parsers = {}
         for attr, func in inspect.getmembers(self):
             if attr.startswith("parse_"):
