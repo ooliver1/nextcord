@@ -106,6 +106,7 @@ if TYPE_CHECKING:
     from .types.template import CreateTemplate
     from .types.threads import Thread as ThreadPayload
     from .types.voice import GuildVoiceState
+    from .types.widget import EditWidgetSettings
     from .voice_client import VoiceProtocol
     from .webhook import Webhook
 
@@ -3274,7 +3275,7 @@ class Guild(Hashable):
         HTTPException
             Editing the widget failed.
         """
-        payload = {}
+        payload: EditWidgetSettings = {}
         if channel is not MISSING:
             payload["channel_id"] = None if channel is None else channel.id
         if enabled is not MISSING:
