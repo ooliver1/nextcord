@@ -17,6 +17,11 @@ class CreateTemplate(TypedDict):
     description: NotRequired[str]
 
 
+class EditTemplate(TypedDict):
+    name: NotRequired[str]
+    description: NotRequired[Optional[str]]
+
+
 class Template(TypedDict):
     code: str
     name: str
