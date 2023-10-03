@@ -1,7 +1,16 @@
 # SPDX-License-Identifier: MIT
 
-import enum
-from typing import Any, Dict, NamedTuple, Optional, Type, TypeVar
+from enum import Enum
+from typing import (
+    Any,
+    Dict,
+    NamedTuple,
+    Optional,
+    Type,
+    TypeVar,
+)
+
+T = TypeVar("T")
 
 __all__ = (
     "Enum",
@@ -71,55 +80,44 @@ class UnknownEnumValue(NamedTuple):
     def __repr__(self) -> str:
         return f"<{self.name}.{self.value!r}>"
 
-    def __le__(self, other):
+    def __le__(self, other: Any) -> bool:
         try:
             return self.value <= other.value
         except AttributeError:
             return self.value <= other
 
-    def __ge__(self, other):
+    def __ge__(self, other: Any) -> bool:
         try:
             return self.value >= other.value
         except AttributeError:
             return self.value >= other
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any) -> bool:
         try:
             return self.value < other.value
         except AttributeError:
             return self.value < other
 
-    def __gt__(self, other):
+    def __gt__(self, other: Any) -> bool:
         try:
             return self.value > other.value
         except AttributeError:
             return self.value > other
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         try:
             return self.value == other.value
         except AttributeError:
             return self.value == other
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         try:
             return self.value != other.value
         except AttributeError:
             return self.value != other
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.value)
-
-
-class Enum(enum.Enum):
-    """An enum that supports trying for unknown values."""
-
-    @classmethod
-    def try_value(cls, value):
-        try:
-            return cls(value)
-        except ValueError:
-            return value
 
 
 class IntEnum(int, Enum):
@@ -129,7 +127,7 @@ class IntEnum(int, Enum):
         return self.value
 
 
-class StrEnum(str, Enum):  # noqa: SLOT000
+class StrEnum(str, Enum):
     """An enum that supports comparing and hashing as a string."""
 
     def __str__(self) -> str:
