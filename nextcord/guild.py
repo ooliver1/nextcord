@@ -97,6 +97,7 @@ if TYPE_CHECKING:
         GuildFeature,
         MFALevel,
         RolePositionUpdate,
+        UnavailableGuild,
     )
     from .types.integration import IntegrationType
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
@@ -317,7 +318,9 @@ class Guild(Hashable):
         3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=100 * 1024 * 1024),
     }
 
-    def __init__(self, *, data: GuildPayload, state: ConnectionState) -> None:
+    def __init__(
+        self, *, data: Union[GuildPayload, UnavailableGuild], state: ConnectionState
+    ) -> None:
         self._channels: Dict[int, GuildChannel] = {}
         self._members: Dict[int, Member] = {}
         self._scheduled_events: Dict[int, ScheduledEvent] = {}
@@ -446,7 +449,7 @@ class Guild(Hashable):
 
         return role
 
-    def _from_data(self, guild: GuildPayload) -> None:
+    def _from_data(self, guild: Union[GuildPayload, UnavailableGuild]) -> None:
         # according to Stan, this is always available even if the guild is unavailable
         # I don't have this guarantee when someone updates the guild.
         member_count = guild.get("member_count", None)

@@ -66,7 +66,8 @@ if TYPE_CHECKING:
     from .types.activity import Activity as ActivityPayload
     from .types.channel import DMChannel as DMChannelPayload
     from .types.emoji import Emoji as EmojiPayload
-    from .types.guild import Guild as GuildPayload
+    from .types.gateway import HasShardId, ReadyWithShardId
+    from .types.guild import Guild as GuildPayload, UnavailableGuild
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.message import Message as MessagePayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
@@ -494,7 +495,7 @@ class ConnectionState:
             else None
         )
 
-    def _add_guild_from_data(self, data: GuildPayload) -> Guild:
+    def _add_guild_from_data(self, data: Union[GuildPayload, UnavailableGuild]) -> Guild:
         guild = Guild(data=data, state=self)
         self._add_guild(guild)
         return guild
@@ -2422,7 +2423,7 @@ class AutoShardedConnectionState(ConnectionState):
         self.call_handlers("ready")
         self.dispatch("ready")
 
-    def parse_ready(self, data) -> None:
+    def parse_ready(self, data: ReadyWithShardId) -> None:
         if not hasattr(self, "_ready_state"):
             self._ready_state = asyncio.Queue()
 
@@ -2438,7 +2439,7 @@ class AutoShardedConnectionState(ConnectionState):
             else:
                 self.application_id: Optional[int] = utils.get_as_snowflake(application, "id")
                 self.application_flags: ApplicationFlags = ApplicationFlags._from_value(
-                    application["flags"]
+                    application.get("flags", 0)
                 )
 
         for guild_data in data["guilds"]:
@@ -2453,6 +2454,6 @@ class AutoShardedConnectionState(ConnectionState):
         if self._ready_task is None:
             self._ready_task = asyncio.create_task(self._delay_ready())
 
-    def parse_resumed(self, data) -> None:
+    def parse_resumed(self, data: HasShardId) -> None:
         self.dispatch("resumed")
         self.dispatch("shard_resumed", data["__shard_id__"])
