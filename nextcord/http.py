@@ -159,7 +159,7 @@ class HTTPClient:
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         loop: Optional[asyncio.AbstractEventLoop] = None,
         unsync_clock: bool = True,
-        dispatch: Callable,
+        dispatch: Callable[..., None],
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self.connector = connector
