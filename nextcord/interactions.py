@@ -39,10 +39,12 @@ if TYPE_CHECKING:
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .client import Client
     from .guild import Guild
+    from .http import HTTPClient
     from .message import AllowedMentions
     from .state import ConnectionState
     from .threads import Thread
     from .types.interactions import Interaction as InteractionPayload, InteractionData
+    from .types.user import User as UserPayload
     from .ui.modal import Modal
     from .ui.view import View
 
@@ -1093,20 +1095,20 @@ class _InteractionMessageState:
         self._interaction: Interaction = interaction
         self._parent: ConnectionState = parent
 
-    def _get_guild(self, guild_id):
+    def _get_guild(self, guild_id) -> Optional[Guild]:
         return self._parent._get_guild(guild_id)
 
-    def store_user(self, data):
+    def store_user(self, data: UserPayload) -> User:
         return self._parent.store_user(data)
 
-    def create_user(self, data):
+    def create_user(self, data: UserPayload) -> User:
         return self._parent.create_user(data)
 
     @property
-    def http(self):
+    def http(self) -> HTTPClient:
         return self._parent.http
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         return getattr(self._parent, attr)
 
 
