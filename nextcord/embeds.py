@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 __all__ = ("Embed",)
 
 # Backwards compatibility
-EmptyEmbed = None
+EmptyEmbed: None = None
 
 
 class EmbedProxy:
@@ -150,23 +150,12 @@ class Embed:
         description: Optional[Any] = None,
         timestamp: Optional[datetime.datetime] = None,
     ) -> None:
-        self.colour = colour if colour is not None else color
-        self.title = title
-        self.type = type
-        self.url = url
-        self.description = description
-
-        if self.title is not None:
-            self.title = str(self.title)
-
-        if self.description is not None:
-            self.description = str(self.description)
-
-        if self.url is not None:
-            self.url = str(self.url)
-
-        if timestamp:
-            self.timestamp = timestamp
+        self._colour = colour if colour is not None else color
+        self.title: Optional[str] = None if title is None else str(title)
+        self.type: Optional[EmbedType] = type
+        self.url: Optional[str] = None if url is not None else str(url)
+        self.description: Optional[str] = None if description is None else str(description)
+        self._timestamp = timestamp
 
     # backwards compatibility
     @property
@@ -278,7 +267,7 @@ class Embed:
         return getattr(self, "_colour", None)
 
     @colour.setter
-    def colour(self, value: Optional[Union[int, Colour]]):  # type: ignore
+    def colour(self, value: Optional[Union[int, Colour]]) -> None:  # type: ignore
         if isinstance(value, Colour) or value is None:
             self._colour = value
         elif isinstance(value, int):
@@ -295,7 +284,7 @@ class Embed:
         return getattr(self, "_timestamp", None)
 
     @timestamp.setter
-    def timestamp(self, value: Optional[datetime.datetime]):
+    def timestamp(self, value: Optional[datetime.datetime]) -> None:
         if value is None:
             self._timestamp = value
         elif isinstance(value, datetime.datetime):

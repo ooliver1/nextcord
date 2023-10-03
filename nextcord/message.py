@@ -1882,6 +1882,7 @@ class PartialMessage(Hashable):
 
     __slots__ = ("channel", "id", "_cs_guild", "_state")
 
+    # TODO: Inheritance???
     jump_url: str = Message.jump_url  # type: ignore
     delete = Message.delete
     publish = Message.publish
