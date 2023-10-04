@@ -6,9 +6,12 @@ import copy
 import functools
 import itertools
 import re
-from typing import TYPE_CHECKING, ClassVar, Dict
+from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, Mapping, Sequence, Union, cast
 
 import nextcord.utils
+from nextcord.abc import Messageable
+from nextcord.ext.commands.bot import AutoShardedBot, Bot
+from nextcord.ext.commands.cog import Cog
 
 from .core import Command, Group
 from .errors import CommandError
@@ -16,6 +19,9 @@ from .errors import CommandError
 if TYPE_CHECKING:
     from typing import Any, Callable, Optional
 
+    from typing_extensions import Self
+
+    from ._types import Check
     from .context import Context
 
 __all__ = (
@@ -290,7 +296,7 @@ class HelpCommand:
 
     MENTION_PATTERN = re.compile("|".join(MENTION_TRANSFORMS.keys()))
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         # To prevent race conditions of a single instance while also allowing
         # for settings to be passed the original arguments passed must be assigned
         # to allow for easier copies (which will be made when the help command is actually called)
@@ -306,30 +312,32 @@ class HelpCommand:
         self.__original_args__ = deepcopy(args)  # type: ignore
         return self
 
-    def __init__(self, **options) -> None:
-        self.show_hidden = options.pop("show_hidden", False)
-        self.verify_checks = options.pop("verify_checks", True)
+    def __init__(self, **options: Any) -> None:
+        self.show_hidden: bool = options.pop("show_hidden", False)
+        self.verify_checks: Optional[bool] = options.pop("verify_checks", True)
+        self.command_attrs: Dict[str, Any]
+        attrs: Dict[str, Any]
         self.command_attrs = attrs = options.pop("command_attrs", {})
         attrs.setdefault("name", "help")
         attrs.setdefault("help", "Shows this message")
-        self.context: Context = nextcord.utils.MISSING
+        self.context: Context[Any] = nextcord.utils.MISSING
         self._command_impl = _HelpCommandImpl(self, **self.command_attrs)
 
-    def copy(self):
+    def copy(self) -> Self:
         obj = self.__class__(*self.__original_args__, **self.__original_kwargs__)  # type: ignore
         obj._command_impl = self._command_impl
         return obj
 
-    def _add_to_bot(self, bot) -> None:
+    def _add_to_bot(self, bot: Union[Bot, AutoShardedBot]) -> None:
         command = _HelpCommandImpl(self, **self.command_attrs)
         bot.add_command(command)
         self._command_impl = command
 
-    def _remove_from_bot(self, bot) -> None:
+    def _remove_from_bot(self, bot: Union[Bot, AutoShardedBot]) -> None:
         bot.remove_command(self._command_impl.name)
         self._command_impl._eject_cog()
 
-    def add_check(self, func) -> None:
+    def add_check(self, func: Check) -> None:
         """
         Adds a check to the help command.
 
@@ -343,7 +351,7 @@ class HelpCommand:
 
         self._command_impl.add_check(func)
 
-    def remove_check(self, func) -> None:
+    def remove_check(self, func: Check) -> None:
         """
         Removes a check from the help command.
 
@@ -360,7 +368,7 @@ class HelpCommand:
 
         self._command_impl.remove_check(func)
 
-    def get_bot_mapping(self):
+    def get_bot_mapping(self) -> Mapping[Optional[Cog], Sequence[Command[Any, Any, Any]]]:
         """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
         bot = self.context.bot
         mapping = {cog: cog.get_commands() for cog in bot.cogs.values()}
@@ -368,7 +376,7 @@ class HelpCommand:
         return mapping
 
     @property
-    def invoked_with(self):
+    def invoked_with(self) -> str:
         """Similar to :attr:`Context.invoked_with` except properly handles
         the case where :meth:`Context.send_help` is used.
 
@@ -390,9 +398,9 @@ class HelpCommand:
             or ctx.command.qualified_name != command_name
         ):
             return command_name
-        return ctx.invoked_with
+        return cast(str, ctx.invoked_with)
 
-    def get_command_signature(self, command) -> str:
+    def get_command_signature(self, command: Command[Any, Any, Any]) -> str:
         """Retrieves the signature portion of the help page.
 
         Parameters
@@ -406,8 +414,9 @@ class HelpCommand:
             The signature for the command.
         """
 
-        parent = command.parent
+        parent = cast(Group[Any, Any, Any], command.parent)
         entries = []
+        # TODO: Bot can apparently be parent, and that's eliminated, why is command.parent GroupMixin?
         while parent is not None:
             if not parent.signature or parent.invoke_without_command:
                 entries.append(parent.name)
@@ -427,7 +436,7 @@ class HelpCommand:
 
         return f"{self.context.clean_prefix}{alias} {command.signature}"
 
-    def remove_mentions(self, string):
+    def remove_mentions(self, string: str) -> str:
         """Removes mentions from the string to prevent abuse.
 
         This includes ``@everyone``, ``@here``, member mentions and role mentions.
@@ -444,7 +453,7 @@ class HelpCommand:
         return self.MENTION_PATTERN.sub(replace, string)
 
     @property
-    def cog(self):
+    def cog(self) -> Optional[Cog]:
         """A property for retrieving or setting the cog for the help command.
 
         When a cog is set for the help command, it is as-if the help command
@@ -461,7 +470,7 @@ class HelpCommand:
         return self._command_impl.cog
 
     @cog.setter
-    def cog(self, cog) -> None:
+    def cog(self, cog: Optional[Cog]) -> None:
         # Remove whatever cog is currently valid, if any
         self._command_impl._eject_cog()
 
@@ -469,7 +478,7 @@ class HelpCommand:
         if cog is not None:
             self._command_impl._inject_into_cog(cog)
 
-    def command_not_found(self, string) -> str:
+    def command_not_found(self, string: str) -> str:
         """|maybecoro|
 
         A method called when a command is not found in the help command.
@@ -490,7 +499,7 @@ class HelpCommand:
         """
         return f'No command called "{string}" found.'
 
-    def subcommand_not_found(self, command, string) -> str:
+    def subcommand_not_found(self, command: Command[Any, Any, Any], string: str) -> str:
         """|maybecoro|
 
         A method called when a command did not have a subcommand requested in the help command.
@@ -522,7 +531,7 @@ class HelpCommand:
 
     async def filter_commands(
         self,
-        commands,
+        commands: Iterable[Command[Any, Any, Any]],
         *,
         sort: bool = False,
         key: Optional[Callable[[Command[Any, Any, Any]], str]] = None,
@@ -584,7 +593,7 @@ class HelpCommand:
             ret.sort(key=key)
         return ret
 
-    def get_max_size(self, commands):
+    def get_max_size(self, commands: Sequence[Command[Any, Any, Any]]) -> int:
         """Returns the largest name length of the specified command list.
 
         Parameters
@@ -601,7 +610,7 @@ class HelpCommand:
         as_lengths = (nextcord.utils.string_width(c.name) for c in commands)
         return max(as_lengths, default=0)
 
-    def get_destination(self):
+    def get_destination(self) -> Messageable:
         """Returns the :class:`~nextcord.abc.Messageable` where the help command will be output.
 
         You can override this method to customise the behaviour.
@@ -615,7 +624,7 @@ class HelpCommand:
         """
         return self.context.channel
 
-    async def send_error_message(self, error) -> None:
+    async def send_error_message(self, error: str) -> None:
         """|coro|
 
         Handles the implementation when an error happens in the help command.
@@ -640,7 +649,7 @@ class HelpCommand:
         await destination.send(error)
 
     @_not_overriden
-    async def on_help_command_error(self, ctx, error) -> None:
+    async def on_help_command_error(self, ctx: Context[Any], error: CommandError) -> None:
         """|coro|
 
         The help command's error handler, as specified by :ref:`ext_commands_error_handler`.
@@ -659,7 +668,9 @@ class HelpCommand:
             The error that was raised.
         """
 
-    async def send_bot_help(self, mapping) -> None:
+    async def send_bot_help(
+        self, mapping: Mapping[Optional[Cog], Sequence[Command[Any, Any, Any]]]
+    ) -> None:
         """|coro|
 
         Handles the implementation of the bot command page in the help command.
@@ -688,7 +699,7 @@ class HelpCommand:
         """
         return
 
-    async def send_cog_help(self, cog) -> None:
+    async def send_cog_help(self, cog: Cog) -> None:
         """|coro|
 
         Handles the implementation of the cog page in the help command.
@@ -716,7 +727,7 @@ class HelpCommand:
         """
         return
 
-    async def send_group_help(self, group) -> None:
+    async def send_group_help(self, group: Group[Any, Any, Any]) -> None:
         """|coro|
 
         Handles the implementation of the group page in the help command.
@@ -744,7 +755,7 @@ class HelpCommand:
         """
         return
 
-    async def send_command_help(self, command) -> None:
+    async def send_command_help(self, command: Command[Any, Any, Any]) -> None:
         """|coro|
 
         Handles the implementation of the single command page in the help command.
@@ -782,7 +793,7 @@ class HelpCommand:
         """
         return
 
-    async def prepare_help_command(self, ctx, command=None) -> None:
+    async def prepare_help_command(self, ctx: Context[Any], command: Optional[str] = None) -> None:
         """|coro|
 
         A low level method that can be used to prepare the help command
@@ -805,7 +816,7 @@ class HelpCommand:
             The argument passed to the help command.
         """
 
-    async def command_callback(self, ctx, *, command=None):
+    async def command_callback(self, ctx: Context[Any], *, command: Optional[str] = None):
         """|coro|
 
         The actual implementation of the help command.
@@ -888,7 +899,7 @@ class DefaultHelpCommand(HelpCommand):
         output is DM'd. If ``None``, then the bot will only DM when the help
         message becomes too long (dictated by more than :attr:`dm_help_threshold` characters).
         Defaults to ``False``.
-    dm_help_threshold: Optional[:class:`int`]
+    dm_help_threshold: :class:`int`
         The number of characters the paginator must accumulate before getting DM'd to the
         user if :attr:`dm_help` is set to ``None``. Defaults to 1000.
     indent: :class:`int`
@@ -903,21 +914,21 @@ class DefaultHelpCommand(HelpCommand):
         The paginator used to paginate the help command output.
     """
 
-    def __init__(self, **options) -> None:
-        self.width = options.pop("width", 80)
-        self.indent = options.pop("indent", 2)
-        self.sort_commands = options.pop("sort_commands", True)
-        self.dm_help = options.pop("dm_help", False)
-        self.dm_help_threshold = options.pop("dm_help_threshold", 1000)
-        self.commands_heading = options.pop("commands_heading", "Commands:")
-        self.no_category = options.pop("no_category", "No Category")
+    def __init__(self, **options: Any) -> None:
+        self.width: int = options.pop("width", 80)
+        self.indent: int = options.pop("indent", 2)
+        self.sort_commands: bool = options.pop("sort_commands", True)
+        self.dm_help: Optional[bool] = options.pop("dm_help", False)
+        self.dm_help_threshold: int = options.pop("dm_help_threshold", 1000)
+        self.commands_heading: str = options.pop("commands_heading", "Commands:")
+        self.no_category: str = options.pop("no_category", "No Category")
         paginator = options.pop("paginator", None)
 
-        self.paginator = paginator or Paginator()
+        self.paginator: Paginator = paginator or Paginator()
 
         super().__init__(**options)
 
-    def shorten_text(self, text):
+    def shorten_text(self, text: str) -> str:
         """:class:`str`: Shortens text to fit into the :attr:`width`."""
         if len(text) > self.width:
             return text[: self.width - 3].rstrip() + "..."
@@ -931,7 +942,13 @@ class DefaultHelpCommand(HelpCommand):
             f"You can also type {self.context.clean_prefix}{command_name} category for more info on a category."
         )
 
-    def add_indented_commands(self, commands, *, heading, max_size=None) -> None:
+    def add_indented_commands(
+        self,
+        commands: Sequence[Command[Any, Any, Any]],
+        *,
+        heading: str,
+        max_size: Optional[int] = None,
+    ) -> None:
         """Indents a list of commands after the specified heading.
 
         The formatting is added to the :attr:`paginator`.
@@ -973,7 +990,7 @@ class DefaultHelpCommand(HelpCommand):
         for page in self.paginator.pages:
             await destination.send(page)
 
-    def add_command_formatting(self, command) -> None:
+    def add_command_formatting(self, command: Command[Any, Any, Any]) -> None:
         """A utility function to format the non-indented block of commands and groups.
 
         Parameters
@@ -996,7 +1013,7 @@ class DefaultHelpCommand(HelpCommand):
                     self.paginator.add_line(line)
                 self.paginator.add_line()
 
-    def get_destination(self):
+    def get_destination(self) -> Messageable:
         ctx = self.context
         if self.dm_help is True:
             return ctx.author
@@ -1004,11 +1021,13 @@ class DefaultHelpCommand(HelpCommand):
             return ctx.author
         return ctx.channel
 
-    async def prepare_help_command(self, ctx, command) -> None:
+    async def prepare_help_command(self, ctx: Context[Any], command: Optional[str]) -> None:
         self.paginator.clear()
         await super().prepare_help_command(ctx, command)
 
-    async def send_bot_help(self, mapping) -> None:
+    async def send_bot_help(
+        self, mapping: Mapping[Optional[Cog], Sequence[Command[Any, Any, Any]]]
+    ) -> None:
         ctx = self.context
         bot = ctx.bot
 
@@ -1040,12 +1059,12 @@ class DefaultHelpCommand(HelpCommand):
 
         await self.send_pages()
 
-    async def send_command_help(self, command) -> None:
+    async def send_command_help(self, command: Command[Any, Any, Any]) -> None:
         self.add_command_formatting(command)
         self.paginator.close_page()
         await self.send_pages()
 
-    async def send_group_help(self, group) -> None:
+    async def send_group_help(self, group: Group[Any, Any, Any]) -> None:
         self.add_command_formatting(group)
 
         filtered = await self.filter_commands(group.commands, sort=self.sort_commands)
@@ -1059,7 +1078,7 @@ class DefaultHelpCommand(HelpCommand):
 
         await self.send_pages()
 
-    async def send_cog_help(self, cog) -> None:
+    async def send_cog_help(self, cog: Cog) -> None:
         if cog.description:
             self.paginator.add_line(cog.description, empty=True)
 
@@ -1096,7 +1115,7 @@ class MinimalHelpCommand(HelpCommand):
         output is DM'd. If ``None``, then the bot will only DM when the help
         message becomes too long (dictated by more than :attr:`dm_help_threshold` characters).
         Defaults to ``False``.
-    dm_help_threshold: Optional[:class:`int`]
+    dm_help_threshold: :class:`int`
         The number of characters the paginator must accumulate before getting DM'd to the
         user if :attr:`dm_help` is set to ``None``. Defaults to 1000.
     no_category: :class:`str`
@@ -1106,16 +1125,17 @@ class MinimalHelpCommand(HelpCommand):
         The paginator used to paginate the help command output.
     """
 
-    def __init__(self, **options) -> None:
-        self.sort_commands = options.pop("sort_commands", True)
-        self.commands_heading = options.pop("commands_heading", "Commands")
-        self.dm_help = options.pop("dm_help", False)
-        self.dm_help_threshold = options.pop("dm_help_threshold", 1000)
-        self.aliases_heading = options.pop("aliases_heading", "Aliases:")
-        self.no_category = options.pop("no_category", "No Category")
+    def __init__(self, **options: Any) -> None:
+        # TODO: remove `options` and use proper keyword arguments
+        self.sort_commands: bool = options.pop("sort_commands", True)
+        self.commands_heading: str = options.pop("commands_heading", "Commands")
+        self.dm_help: Optional[bool] = options.pop("dm_help", False)
+        self.dm_help_threshold: int = options.pop("dm_help_threshold", 1000)
+        self.aliases_heading: str = options.pop("aliases_heading", "Aliases:")
+        self.no_category: str = options.pop("no_category", "No Category")
         paginator = options.pop("paginator", None)
 
-        self.paginator = paginator or Paginator(suffix=None, prefix=None)
+        self.paginator: Paginator = paginator or Paginator(suffix=None, prefix=None)
 
         super().__init__(**options)
 
@@ -1144,7 +1164,7 @@ class MinimalHelpCommand(HelpCommand):
             f"You can also use `{self.context.clean_prefix}{command_name} [category]` for more info on a category."
         )
 
-    def get_command_signature(self, command) -> str:
+    def get_command_signature(self, command: Command[Any, Any, Any]) -> str:
         return f"{self.context.clean_prefix}{command.qualified_name} {command.signature}"
 
     def get_ending_note(self) -> None:
@@ -1159,7 +1179,9 @@ class MinimalHelpCommand(HelpCommand):
         """
         return
 
-    def add_bot_commands_formatting(self, commands, heading) -> None:
+    def add_bot_commands_formatting(
+        self, commands: Sequence[Command[Any, Any, Any]], heading: str
+    ) -> None:
         """Adds the minified bot heading with commands to the output.
 
         The formatting should be added to the :attr:`paginator`.
@@ -1180,7 +1202,7 @@ class MinimalHelpCommand(HelpCommand):
             self.paginator.add_line(f"__**{heading}**__")
             self.paginator.add_line(joined)
 
-    def add_subcommand_formatting(self, command) -> None:
+    def add_subcommand_formatting(self, command: Command[Any, Any, Any]) -> None:
         """Adds formatting information on a subcommand.
 
         The formatting should be added to the :attr:`paginator`.
@@ -1198,7 +1220,7 @@ class MinimalHelpCommand(HelpCommand):
             fmt.format(self.context.clean_prefix, command.qualified_name, command.short_doc)
         )
 
-    def add_aliases_formatting(self, aliases) -> None:
+    def add_aliases_formatting(self, aliases: Sequence[str]) -> None:
         """Adds the formatting information on a command's aliases.
 
         The formatting should be added to the :attr:`paginator`.
@@ -1215,7 +1237,7 @@ class MinimalHelpCommand(HelpCommand):
         """
         self.paginator.add_line(f'**{self.aliases_heading}** {", ".join(aliases)}', empty=True)
 
-    def add_command_formatting(self, command) -> None:
+    def add_command_formatting(self, command: Command[Any, Any, Any]) -> None:
         """A utility function to format commands and groups.
 
         Parameters
@@ -1242,7 +1264,7 @@ class MinimalHelpCommand(HelpCommand):
                     self.paginator.add_line(line)
                 self.paginator.add_line()
 
-    def get_destination(self):
+    def get_destination(self) -> Messageable:
         ctx = self.context
         if self.dm_help is True:
             return ctx.author
@@ -1250,11 +1272,13 @@ class MinimalHelpCommand(HelpCommand):
             return ctx.author
         return ctx.channel
 
-    async def prepare_help_command(self, ctx, command) -> None:
+    async def prepare_help_command(self, ctx: Context[Any], command: Optional[str]) -> None:
         self.paginator.clear()
         await super().prepare_help_command(ctx, command)
 
-    async def send_bot_help(self, mapping) -> None:
+    async def send_bot_help(
+        self, mapping: Mapping[Optional[str], Sequence[Command[Any, Any, Any]]]
+    ) -> None:
         ctx = self.context
         bot = ctx.bot
 
@@ -1287,7 +1311,7 @@ class MinimalHelpCommand(HelpCommand):
 
         await self.send_pages()
 
-    async def send_cog_help(self, cog) -> None:
+    async def send_cog_help(self, cog: Cog) -> None:
         bot = self.context.bot
         if bot.description:
             self.paginator.add_line(bot.description, empty=True)
@@ -1312,7 +1336,7 @@ class MinimalHelpCommand(HelpCommand):
 
         await self.send_pages()
 
-    async def send_group_help(self, group) -> None:
+    async def send_group_help(self, group: Group[Any, Any, Any]) -> None:
         self.add_command_formatting(group)
 
         filtered = await self.filter_commands(group.commands, sort=self.sort_commands)
@@ -1332,7 +1356,7 @@ class MinimalHelpCommand(HelpCommand):
 
         await self.send_pages()
 
-    async def send_command_help(self, command) -> None:
+    async def send_command_help(self, command: Command[Any, Any, Any]) -> None:
         self.add_command_formatting(command)
         self.paginator.close_page()
         await self.send_pages()
