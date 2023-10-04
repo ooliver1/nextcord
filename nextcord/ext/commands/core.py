@@ -1853,7 +1853,9 @@ def check(predicate: Check) -> Callable[[T], T]:
         The predicate to check if the command should be invoked.
     """
 
-    def decorator(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+    def decorator(
+        func: Union[Command[CogT, P, T], CoroFunc]
+    ) -> Union[Command[CogT, P, T], CoroFunc]:
         if isinstance(func, Command):
             func.checks.append(predicate)
         else:
@@ -2100,7 +2102,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
 def _permission_check_wrapper(
     predicate: Check, name: str, perms: Dict[str, bool]
 ) -> Callable[[T], T]:
-    def wrapper(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+    def wrapper(func: Union[Command[CogT, P, T], CoroFunc]) -> Union[Command[CogT, P, T], CoroFunc]:
         callback = func.callback if isinstance(func, Command) else func
 
         setattr(callback, name, perms)
@@ -2345,7 +2347,9 @@ def cooldown(
             Callables are now supported for custom bucket types.
     """
 
-    def decorator(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+    def decorator(
+        func: Union[Command[CogT, P, T], CoroFunc]
+    ) -> Union[Command[CogT, P, T], CoroFunc]:
         if isinstance(func, Command):
             func._buckets = CooldownMapping(Cooldown(rate, per), type)
         else:
@@ -2389,7 +2393,9 @@ def dynamic_cooldown(
     if not callable(cooldown):
         raise TypeError("A callable must be provided")
 
-    def decorator(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+    def decorator(
+        func: Union[Command[CogT, P, T], CoroFunc]
+    ) -> Union[Command[CogT, P, T], CoroFunc]:
         if isinstance(func, Command):
             func._buckets = DynamicCooldownMapping(cooldown, type)
         else:
@@ -2425,7 +2431,9 @@ def max_concurrency(
         then the command waits until it can be executed.
     """
 
-    def decorator(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+    def decorator(
+        func: Union[Command[CogT, P, T], CoroFunc]
+    ) -> Union[Command[CogT, P, T], CoroFunc]:
         value = MaxConcurrency(number, per=per, wait=wait)
         if isinstance(func, Command):
             func._max_concurrency = value
@@ -2475,7 +2483,9 @@ def before_invoke(coro) -> Callable[[T], T]:
         bot.add_cog(What())
     """
 
-    def decorator(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+    def decorator(
+        func: Union[Command[CogT, P, T], CoroFunc]
+    ) -> Union[Command[CogT, P, T], CoroFunc]:
         if isinstance(func, Command):
             func.before_invoke(coro)
         else:
@@ -2494,7 +2504,9 @@ def after_invoke(coro) -> Callable[[T], T]:
     .. versionadded:: 1.4
     """
 
-    def decorator(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
+    def decorator(
+        func: Union[Command[CogT, P, T], CoroFunc]
+    ) -> Union[Command[CogT, P, T], CoroFunc]:
         if isinstance(func, Command):
             func.after_invoke(coro)
         else:
