@@ -162,7 +162,15 @@ class BotBase(GroupMixin):
             case_insensitive=case_insensitive,
         )
 
-        self.command_prefix = command_prefix if command_prefix is not MISSING else ()
+        self.command_prefix: Union[
+            _NonCallablePrefix,
+            Callable[
+                [Union[Bot, AutoShardedBot], Message],
+                Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix],
+            ],
+        ] = (
+            command_prefix if command_prefix is not MISSING else ()
+        )
         self.extra_events: Dict[str, List[CoroFunc]] = {}
         self.__cogs: Dict[str, Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
@@ -170,11 +178,10 @@ class BotBase(GroupMixin):
         self._check_once = []
         self._before_invoke = None
         self._after_invoke = None
-        self._help_command: Optional[HelpCommand] = None
-        self.description = inspect.cleandoc(description) if description else ""
-        self.owner_id = owner_id
-        self.owner_ids = owner_ids or set()
-        self.strip_after_prefix = strip_after_prefix
+        self.description: str = inspect.cleandoc(description) if description else ""
+        self.owner_id: Optional[int] = owner_id
+        self.owner_ids: Iterable[int] = owner_ids or set()
+        self.strip_after_prefix: bool = strip_after_prefix
 
         if self.owner_id and self.owner_ids:
             raise TypeError("Both owner_id and owner_ids are set.")
@@ -203,10 +210,11 @@ class BotBase(GroupMixin):
                 stacklevel=0,
             )
 
+        self._help_command: Optional[HelpCommand]
         if help_command is MISSING:
-            self.help_command = DefaultHelpCommand()
+            self._help_command = DefaultHelpCommand()
         else:
-            self.help_command = help_command
+            self._help_command = help_command
 
     # internal helpers
 
@@ -229,7 +237,7 @@ class BotBase(GroupMixin):
 
         await super().close()  # type: ignore
 
-    async def on_command_error(self, context: Context, exception: errors.CommandError) -> None:
+    async def on_command_error(self, context: Context[Any], exception: errors.CommandError) -> None:
         """|coro|
 
         The default command error handler provided by the bot.
@@ -363,7 +371,8 @@ class BotBase(GroupMixin):
         self.add_check(func, call_once=True)
         return func
 
-    async def can_run(self, ctx: Context, *, call_once: bool = False) -> bool:
+    # TODO: This should be Context[Self], but Context is Bot | AutoShardedBot not BotBase.
+    async def can_run(self, ctx: Context[Any], *, call_once: bool = False) -> bool:
         data = self._check_once if call_once else self._checks
 
         if len(data) == 0:
@@ -1326,7 +1335,7 @@ class BotBase(GroupMixin):
         ctx.command = self.all_commands.get(invoker)
         return ctx
 
-    async def invoke(self, ctx: Context) -> None:
+    async def invoke(self, ctx: Context[Any]) -> None:
         """|coro|
 
         Invokes the command given under the invocation context and
@@ -1471,7 +1480,7 @@ class Bot(BotBase, nextcord.Client):
         The user ID that owns the bot. If this is not set and is then queried via
         :meth:`.is_owner` then it is fetched automatically using
         :meth:`~.Bot.application_info`.
-    owner_ids: Optional[Collection[:class:`int`]]
+    owner_ids: Optional[Iterable[:class:`int`]]
         The user IDs that owns the bot. This is similar to :attr:`owner_id`.
         If this is not set and the application is team based, then it is
         fetched automatically using :meth:`~.Bot.application_info`.
