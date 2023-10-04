@@ -1,8 +1,5 @@
 # SPDX-License-Identifier: MIT
-
-# reportUnknownVariableType and reportUnknownMemberType:
-# array.array is poorly typed (SnowflakeList superclass)
-# pyright: strict, reportUnknownVariableType = false, reportUnknownMemberType = false
+# pyright: strict
 from __future__ import annotations
 
 import array
@@ -629,9 +626,11 @@ def valid_icon_size(size: int) -> bool:
     return not size & (size - 1) and 4096 >= size >= 16
 
 
-# Uncomment when https://github.com/python/cpython/issues/98658 is fixed.
-# class SnowflakeList(array.array[ArrayT], Generic[ArrayT]):
-class SnowflakeList(array.array):  # pyright: ignore[reportMissingTypeArgument]
+# https://github.com/python/cpython/pull/98661 was not backported.
+ArrayBase = array.array[int] if TYPE_CHECKING else array.array
+
+
+class SnowflakeList(ArrayBase):
     """Internal data storage class to efficiently store a list of snowflakes.
 
     This should have the following characteristics:
@@ -919,7 +918,7 @@ def parse_raw_channel_mentions(text: str) -> List[int]:
 
 
 def _chunk(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]:
-    ret = []
+    ret: List[T] = []
     n = 0
     for item in iterator:
         ret.append(item)
@@ -933,7 +932,7 @@ def _chunk(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]:
 
 
 async def _achunk(iterator: AsyncIterator[T], max_size: int) -> AsyncIterator[List[T]]:
-    ret = []
+    ret: List[T] = []
     n = 0
     async for item in iterator:
         ret.append(item)
@@ -987,7 +986,7 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
 
 
 def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
-    params = []
+    params: List[Any] = []
     literal_cls = type(Literal[0])
     for p in parameters:
         if isinstance(p, literal_cls):
