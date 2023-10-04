@@ -1246,7 +1246,7 @@ class GroupMixin(Generic[CogT]):
         Whether the commands should be case insensitive. Defaults to ``False``.
     """
 
-    def __init__(self, *args, case_insensitive: bool = False, **kwargs) -> None:
+    def __init__(self, *args: Any, case_insensitive: bool = False, **kwargs: Any) -> None:
         self.all_commands: Dict[str, Command[CogT, Any, Any]] = (
             _CaseInsensitiveDict() if case_insensitive else {}
         )
