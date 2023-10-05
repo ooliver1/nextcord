@@ -3313,7 +3313,7 @@ def user_command(
     return decorator
 
 
-def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
+def check_dictionary_values(dict1: Dict[str, T], dict2: Dict[str, T], *keywords: str) -> bool:
     """Helper function to quickly check if 2 dictionaries share the equal value for the same keyword(s).
     Used primarily for checking against the registered command data from Discord.
 
@@ -3347,7 +3347,7 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
     return True
 
 
-def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
+def deep_dictionary_check(dict1: Dict[str, T], dict2: Dict[str, T]) -> bool:
     """Used to check if all keys and values between two dicts are equal, and recurses if it encounters a nested dict."""
     if dict1.keys() != dict2.keys():
         _log.debug(
@@ -3359,9 +3359,9 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
 
     for key in dict1:
         if (
-            isinstance(dict1[key], dict)
-            and isinstance(dict2[key], dict)
-            and not deep_dictionary_check(dict1[key], dict2[key])
+            isinstance(value1 := dict1[key], dict)
+            and isinstance(value2 := dict2[key], dict)
+            and not deep_dictionary_check(value1, value2)
         ):
             return False
 
