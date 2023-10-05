@@ -123,7 +123,7 @@ def flag(
     return Flag(name=name, aliases=aliases, default=default, max_args=max_args, override=override)
 
 
-def validate_flag_name(name: str, forbidden: Set[str]):
+def validate_flag_name(name: str, forbidden: Set[str]) -> None:
     if not name:
         raise ValueError("flag names should not be empty")
 
