@@ -56,6 +56,8 @@ from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import Snowflake
     from .state import ConnectionState
     from .types.checks import ApplicationCheck, ApplicationErrorCallback, ApplicationHook
@@ -483,7 +485,7 @@ class ClientCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
     __cog_application_commands__: List[BaseApplicationCommand]
 
-    def __new__(cls, *_args: Any, **_kwargs: Any):
+    def __new__(cls, *_args: Any, **_kwargs: Any) -> Self:
         new_cls = super(ClientCog, cls).__new__(cls)
         new_cls._read_application_commands()
         return new_cls
