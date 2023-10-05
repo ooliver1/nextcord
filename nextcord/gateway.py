@@ -376,7 +376,7 @@ class DiscordWebSocket:
 
     def wait_for(
         self, event: str, predicate: Callable, result: Optional[Callable[[Any], Any]] = None
-    ) -> asyncio.Future:
+    ) -> asyncio.Future[Any]:
         """Waits for a DISPATCH'd event that meets the predicate.
 
         Parameters
