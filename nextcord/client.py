@@ -71,6 +71,8 @@ from .webhook import Webhook
 from .widget import Widget
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
@@ -572,7 +574,7 @@ class Client:
         traceback.print_exc()
 
     async def on_application_command_error(
-        self, interaction: Interaction, exception: ApplicationError
+        self, interaction: Interaction[Self], exception: ApplicationError
     ) -> None:
         """|coro|
 
@@ -2081,10 +2083,10 @@ class Client:
         """
         return [event for guild in self.guilds for event in guild.scheduled_events]
 
-    async def on_interaction(self, interaction: Interaction) -> None:
+    async def on_interaction(self, interaction: Interaction[Self]) -> None:
         await self.process_application_commands(interaction)
 
-    async def process_application_commands(self, interaction: Interaction) -> None:
+    async def process_application_commands(self, interaction: Interaction[Self]) -> None:
         """|coro|
         Processes the data in the given interaction and calls associated applications or autocomplete if possible.
         Lazy-loads commands if enabled.
@@ -2844,11 +2846,11 @@ class Client:
         return utils.unique(it)
 
     @overload
-    def get_interaction(self, data) -> Interaction:
+    def get_interaction(self, data) -> Interaction[Self]:
         ...
 
     @overload
-    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
+    def get_interaction(self, data, *, cls: Type[Interaction[Self]]) -> Interaction[Self]:
         ...
 
     @overload
@@ -2856,8 +2858,8 @@ class Client:
         ...
 
     def get_interaction(
-        self, data, *, cls: Type[InterT] = Interaction
-    ) -> Union[Interaction, InterT]:
+        self, data, *, cls: Type[InterT] = Interaction[Self]
+    ) -> Union[Interaction[Self], InterT]:
         """Returns an interaction for a gateway event.
 
         Parameters
