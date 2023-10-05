@@ -793,10 +793,13 @@ class BadUnionArgument(UserInputError):
     """
 
     def __init__(
-        self, param: Parameter, converters: Tuple[Type, ...], errors: List[CommandError]
+        self,
+        param: Parameter,
+        converters: Tuple[Type[Converter[Any]], ...],
+        errors: List[CommandError],
     ) -> None:
         self.param: Parameter = param
-        self.converters: Tuple[Type, ...] = converters
+        self.converters: Tuple[Type[Converter[Any]], ...] = converters
         self.errors: List[CommandError] = errors
 
         def _get_name(x):
