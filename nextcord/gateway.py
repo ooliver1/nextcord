@@ -12,7 +12,7 @@ import time
 import traceback
 import zlib
 from collections import deque, namedtuple
-from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Awaitable, Callable, Deque, Dict, List, Optional, Union
 
 import aiohttp
 
@@ -108,13 +108,13 @@ class GatewayRatelimiter:
 
 
 class KeepAliveHandler(threading.Thread):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         ws: DiscordWebSocket = kwargs.pop("ws")  # will fail at `_main_thread_id` anyway
         interval: Optional[float] = kwargs.pop("interval", None)
         shard_id: Optional[int] = kwargs.pop("shard_id", None)
         threading.Thread.__init__(self, *args, **kwargs)
-        self.ws = ws
-        self._main_thread_id = ws.thread_id
+        self.ws: DiscordWebSocket = ws
+        self._main_thread_id: int = ws.thread_id
         self.interval: Optional[float] = interval
         self.daemon: bool = True
         self.shard_id: Optional[int] = shard_id
@@ -191,12 +191,12 @@ class KeepAliveHandler(threading.Thread):
 
 
 class VoiceKeepAliveHandler(KeepAliveHandler):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.recent_ack_latencies = deque(maxlen=20)
-        self.msg = "Keeping shard ID %s voice websocket alive with timestamp %s."
-        self.block_msg = "Shard ID %s voice heartbeat blocked for more than %s seconds"
-        self.behind_msg = "High socket latency, shard ID %s heartbeat is %.1fs behind"
+        self.recent_ack_latencies: Deque[float] = deque(maxlen=20)
+        self.msg: str = "Keeping shard ID %s voice websocket alive with timestamp %s."
+        self.block_msg: str = "Shard ID %s voice heartbeat blocked for more than %s seconds"
+        self.behind_msg: str = "High socket latency, shard ID %s heartbeat is %.1fs behind"
 
     def get_payload(self) -> Dict[str, int]:
         return {"op": self.ws.HEARTBEAT, "d": int(time.time() * 1000)}
