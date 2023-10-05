@@ -56,7 +56,7 @@ from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing_extensions import Concatenate, ParamSpec, Self
 
     from .abc import Snowflake
     from .state import ConnectionState
@@ -68,6 +68,21 @@ if TYPE_CHECKING:
     )
 
     _CustomTypingMetaBase = Any
+    P = ParamSpec("P")
+    T = TypeVar("T")
+    Coro = Coroutine[Any, Any, T]
+    OptionType = Union[float, str]
+    AutocompleteReturn = Optional[Union[List[str], Dict[str, OptionType]]]
+    AutocompleteNoCog = Callable[
+        Concatenate[Interaction[Any], Any, ...],
+        Coro[AutocompleteReturn],
+    ]
+    AutocompleteCog = Callable[
+        Concatenate["ClientCog", Interaction[Any], Any, ...],
+        Coro[AutocompleteReturn],
+    ]
+    AutocompleteCallback = Union[AutocompleteNoCog, AutocompleteCog]
+    AutocompleteT = TypeVar("AutocompleteT", bound=AutocompleteCallback)
 else:
     _CustomTypingMetaBase = object
     # `ellipsis` is a type-checking only variable. This assignment avoids ruff `F821`
@@ -1008,7 +1023,7 @@ class CallbackMixin:
 class AutocompleteOptionMixin:
     def __init__(
         self,
-        autocomplete_callback: Optional[Callable] = None,
+        autocomplete_callback: Optional[AutocompleteCallback] = None,
         parent_cog: Optional[ClientCog] = None,
     ) -> None:
         """Contains code for providing autocomplete support, specifically for options.
@@ -1023,11 +1038,11 @@ class AutocompleteOptionMixin:
             Class that the callback resides on. Will be passed into the callback if provided.
 
         """
-        self.autocomplete_callback: Optional[Callable] = autocomplete_callback
+        self.autocomplete_callback: Optional[AutocompleteCallback] = autocomplete_callback
         self.autocomplete_options: Set[str] = set()
         self.parent_cog: Optional[ClientCog] = parent_cog
 
-    def from_autocomplete_callback(self, callback: Callable) -> AutocompleteOptionMixin:
+    def from_autocomplete_callback(self, callback: AutocompleteCallback) -> AutocompleteOptionMixin:
         """Parses a callback meant to be the autocomplete function."""
         self.autocomplete_callback = callback
         if not asyncio.iscoroutinefunction(self.autocomplete_callback):
@@ -1048,8 +1063,8 @@ class AutocompleteOptionMixin:
         return self
 
     async def invoke_autocomplete_callback(
-        self, interaction: Interaction[Any], option_value: Any, **kwargs
-    ) -> None:
+        self, interaction: Interaction[Any], option_value: Any, **kwargs: Any
+    ) -> Optional[AutocompleteReturn]:
         """|coro|
         Invokes the autocomplete callback, injecting ``self`` if available.
         """
@@ -1057,11 +1072,13 @@ class AutocompleteOptionMixin:
             raise ValueError("Autocomplete hasn't been set for this function.")
 
         if self.parent_cog:
-            return await self.autocomplete_callback(
+            return await cast("AutocompleteCog", self.autocomplete_callback)(
                 self.parent_cog, interaction, option_value, **kwargs
             )
 
-        return await self.autocomplete_callback(interaction, option_value, **kwargs)
+        return await cast("AutocompleteNoCog", self.autocomplete_callback)(
+            interaction, option_value, **kwargs
+        )
 
 
 class AutocompleteCommandMixin:
@@ -1083,7 +1100,7 @@ class AutocompleteCommandMixin:
         # Why does this exist, and why is it "temp", you may ask? :class:`SlashCommandOption`'s are only available
         # after the callback is fully parsed when the :class:`Client` or :class:`ClientCog` runs the from_callback
         # method, thus we have to hold the decorated autocomplete callbacks temporarily until then.
-        self._temp_autocomplete_callbacks: Dict[str, Callable] = {}
+        self._temp_autocomplete_callbacks: Dict[str, AutocompleteCallback] = {}
 
     async def call_autocomplete_from_interaction(self, interaction: Interaction[Any]) -> None:
         """|coro|
@@ -1191,7 +1208,7 @@ class AutocompleteCommandMixin:
             # If it hasn't returned yet, it didn't find a valid kwarg. Raise it.
             raise ValueError(f'{self.error_name} kwarg "{arg_name}" for autocomplete not found.')
 
-    def on_autocomplete(self, on_kwarg: str):
+    def on_autocomplete(self, on_kwarg: str) -> Callable[[AutocompleteT], AutocompleteT]:
         """Decorator that adds an autocomplete callback to the given kwarg.
 
         .. code-block:: python3
@@ -1224,7 +1241,7 @@ class AutocompleteCommandMixin:
             The slash command option to add the autocomplete callback to.
         """
 
-        def decorator(func: Callable):
+        def decorator(func: AutocompleteT) -> AutocompleteT:
             self._temp_autocomplete_callbacks[on_kwarg] = func
             return func
 
