@@ -9,9 +9,6 @@ import re
 from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, Mapping, Sequence, Union, cast
 
 import nextcord.utils
-from nextcord.abc import Messageable
-from nextcord.ext.commands.bot import AutoShardedBot, Bot
-from nextcord.ext.commands.cog import Cog
 
 from .core import Command, Group
 from .errors import CommandError
@@ -21,7 +18,11 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from nextcord.abc import Messageable
+
     from ._types import Check
+    from .bot import AutoShardedBot, Bot
+    from .cog import Cog
     from .context import Context
 
 __all__ = (
