@@ -317,10 +317,10 @@ class Asset(AssetMixin):
         shorten = self._url.replace(self.BASE, "")
         return f"<Asset url={shorten!r}>"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return isinstance(other, Asset) and self._url == other._url
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self._url)
 
     @property
