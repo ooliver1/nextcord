@@ -43,7 +43,7 @@ class SelectValuesBase(UserList):
         resolved: ComponentInteractionResolved,
         state: ConnectionState,
         guild: Optional[Guild],
-    ):
+    ) -> Self:
         instance = cls()
         users = resolved.get("users", {})
         members = resolved.get("members", {})
