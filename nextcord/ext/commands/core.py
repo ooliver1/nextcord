@@ -764,7 +764,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         return entries
 
     @property
-    def root_parent(self) -> Optional[Group]:
+    def root_parent(self) -> Optional[Group[Any, Any, Any]]:
         """Optional[:class:`Group`]: Retrieves the root parent of this command.
 
         If the command has no parents then it returns ``None``.
