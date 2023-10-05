@@ -627,7 +627,7 @@ def valid_icon_size(size: int) -> bool:
 
 
 # https://github.com/python/cpython/pull/98661 was not backported.
-ArrayBase = array.array[int] if TYPE_CHECKING else array.array
+ArrayBase: Type[array.array[int]] = array.array[int] if TYPE_CHECKING else array.array
 
 
 class SnowflakeList(ArrayBase):
