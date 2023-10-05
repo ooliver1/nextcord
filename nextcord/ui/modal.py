@@ -23,6 +23,8 @@ __all__ = (
 
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ..interactions import ClientT, Interaction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
@@ -310,7 +312,7 @@ class Modal:
             for item in self.children
             if item.is_dispatchable()
         }
-        children: List[Item] = []
+        children: List[Item[Self]] = []
         for component in _walk_all_components(components):
             try:
                 older = old_state[(component.type.value, component.custom_id)]  # type: ignore
@@ -320,7 +322,7 @@ class Modal:
                 older.refresh_component(component)
                 children.append(older)
 
-        self.children = children
+        self.children: List[Item[Self]] = children
 
     def stop(self) -> None:
         """Stops listening to interaction events from this modal.

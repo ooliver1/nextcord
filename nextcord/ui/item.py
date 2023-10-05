@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar, Union
 
 from ..interactions import ClientT, Interaction
 
@@ -17,10 +17,11 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
+    from .modal import Modal
     from .view import View
 
 I = TypeVar("I", bound="Item")
-V_co = TypeVar("V_co", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="Union[View, Modal]", covariant=True)
 ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
