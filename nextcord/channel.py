@@ -938,8 +938,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
         self._update(guild, data)
 
     def _update(self, guild: Guild, data: ForumChannelPayload) -> None:
-        self.guild = guild
-        self.name = data["name"]
+        self.guild: Guild = guild
+        self.name: str = data["name"]
         self.category_id: Optional[int] = utils.get_as_snowflake(data, "parent_id")
         self.topic: Optional[str] = data.get("topic")
         self.position: int = data["position"]
