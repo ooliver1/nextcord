@@ -320,7 +320,7 @@ class View:
         self.children.clear()
         self.__weights.clear()
 
-    async def interaction_check(self, interaction: Interaction) -> bool:
+    async def interaction_check(self, interaction: Interaction[Any]) -> bool:
         """|coro|
 
         A callback that is called when an interaction happens within the view
@@ -354,7 +354,9 @@ class View:
         A callback that is called when a view's timeout elapses without being explicitly stopped.
         """
 
-    async def on_error(self, error: Exception, item: Item[Self], interaction: Interaction) -> None:
+    async def on_error(
+        self, error: Exception, item: Item[Self], interaction: Interaction[Any]
+    ) -> None:
         """|coro|
 
         A callback that is called when an item's callback or :meth:`interaction_check`
@@ -374,7 +376,7 @@ class View:
         print(f"Ignoring exception in view {self} for item {item}:", file=sys.stderr)  # noqa: T201
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
-    async def _scheduled_task(self, item: Item, interaction: Interaction):
+    async def _scheduled_task(self, item: Item, interaction: Interaction[Any]):
         try:
             if self.timeout:
                 self.__timeout_expiry = time.monotonic() + self.timeout
@@ -412,7 +414,7 @@ class View:
         task.add_done_callback(self.__background_tasks.discard)
         self.__stopped.set_result(True)
 
-    def _dispatch_item(self, item: Item, interaction: Interaction) -> None:
+    def _dispatch_item(self, item: Item, interaction: Interaction[Any]) -> None:
         if self.__stopped.done():
             return
 

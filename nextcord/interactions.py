@@ -1094,7 +1094,7 @@ class _InteractionMessageState:
     __slots__ = ("_parent", "_interaction")
 
     def __init__(self, interaction: Interaction[Any], parent: ConnectionState) -> None:
-        self._interaction: Interaction = interaction
+        self._interaction: Interaction[Any] = interaction
         self._parent: ConnectionState = parent
 
     def _get_guild(self, guild_id) -> Optional[Guild]:

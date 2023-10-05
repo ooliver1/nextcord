@@ -13,13 +13,13 @@ if TYPE_CHECKING:
     MaybeCoro = Union[T, Coro[T]]
     CoroFunc = Callable[..., Coro[Any]]
     ApplicationCheck = Union[
-        Callable[[ClientCog, Interaction], MaybeCoro[bool]],
-        Callable[[Interaction], MaybeCoro[bool]],
+        Callable[[ClientCog, Interaction[Any]], MaybeCoro[bool]],
+        Callable[[Interaction[Any]], MaybeCoro[bool]],
     ]
     ApplicationHook = Union[
-        Callable[[ClientCog, Interaction], Coro[Any]], Callable[[Interaction], Coro[Any]]
+        Callable[[ClientCog, Interaction[Any]], Coro[Any]], Callable[[Interaction[Any]], Coro[Any]]
     ]
     ApplicationErrorCallback = Union[
-        Callable[[ClientCog, Interaction, Exception], Coro[Any]],
-        Callable[[Interaction, Exception], Coro[Any]],
+        Callable[[ClientCog, Interaction[Any], Exception], Coro[Any]],
+        Callable[[Interaction[Any], Exception], Coro[Any]],
     ]

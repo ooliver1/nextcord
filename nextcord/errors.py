@@ -241,8 +241,8 @@ class InteractionResponded(ClientException):
         The interaction that's already been responded to.
     """
 
-    def __init__(self, interaction: Interaction) -> None:
-        self.interaction: Interaction = interaction
+    def __init__(self, interaction: Interaction[Any]) -> None:
+        self.interaction: Interaction[Any] = interaction
         super().__init__("This interaction has already been responded to before")
 
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Callable, Dict, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Union
 
 import nextcord
 from nextcord.application_command import (
@@ -80,7 +80,7 @@ if TYPE_CHECKING:
         [
             Union[
                 CoroFunc,
-                Callable[[Interaction], bool],
+                Callable[[Interaction[Any]], bool],
                 BaseApplicationCommand,
                 SlashApplicationSubcommand,
             ]
@@ -226,7 +226,7 @@ def check_any(*checks: "ApplicationCheck") -> AC:
         else:
             unwrapped.append(pred)
 
-    async def predicate(interaction: Interaction) -> bool:
+    async def predicate(interaction: Interaction[Any]) -> bool:
         errors = []
         for func in unwrapped:
             try:
@@ -274,7 +274,7 @@ def has_role(item: Union[int, str]) -> AC:
             await interaction.response.send_message('You are cool indeed')
     """
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage
 
@@ -317,7 +317,7 @@ def has_any_role(*items: Union[int, str]) -> AC:
             await interaction.response.send_message('You are cool indeed')
     """
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage
 
@@ -358,7 +358,7 @@ def bot_has_role(item: Union[int, str]) -> AC:
             await interaction.response.send_message('I have the required role!')
     """
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage
 
@@ -399,7 +399,7 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
             await interaction.response.send_message('I have a required role!')
     """
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage
 
@@ -461,7 +461,7 @@ def has_permissions(**perms: bool) -> AC:
     if invalid:
         raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         ch = interaction.channel
         try:
             permissions = ch.permissions_for(interaction.user)  # type: ignore
@@ -493,7 +493,7 @@ def bot_has_permissions(**perms: bool) -> AC:
     if invalid:
         raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         guild = interaction.guild
         me = guild.me if guild is not None else interaction.client.user
         ch = interaction.channel
@@ -539,7 +539,7 @@ def has_guild_permissions(**perms: bool) -> AC:
     if invalid:
         raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         if not interaction.guild:
             raise ApplicationNoPrivateMessage
 
@@ -563,7 +563,7 @@ def bot_has_guild_permissions(**perms: bool) -> AC:
     if invalid:
         raise TypeError(f"Invalid permission(s): {', '.join(invalid)}")
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         if not interaction.guild:
             raise ApplicationNoPrivateMessage
 
@@ -597,7 +597,7 @@ def dm_only() -> AC:
             await interaction.response.send_message('This is in DMS!')
     """
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         if interaction.guild is not None:
             raise ApplicationPrivateMessageOnly
         return True
@@ -624,7 +624,7 @@ def guild_only() -> AC:
             await interaction.response.send_message('This is in a GUILD!')
     """
 
-    def predicate(interaction: Interaction) -> bool:
+    def predicate(interaction: Interaction[Any]) -> bool:
         if interaction.guild is None:
             raise ApplicationNoPrivateMessage
         return True
@@ -657,7 +657,7 @@ def is_owner() -> AC:
             await interaction.response.send_message('Only you!')
     """
 
-    async def predicate(interaction: Interaction) -> bool:
+    async def predicate(interaction: Interaction[Any]) -> bool:
         if not hasattr(interaction.client, "is_owner"):
             raise ApplicationCheckForBotOnly
 
@@ -685,7 +685,7 @@ def is_nsfw() -> AC:
             await interaction.response.send_message('Only NSFW channels!')
     """
 
-    def pred(interaction: Interaction) -> bool:
+    def pred(interaction: Interaction[Any]) -> bool:
         ch = interaction.channel
         if interaction.guild is None or (
             isinstance(ch, (nextcord.TextChannel, nextcord.Thread)) and ch.is_nsfw()
