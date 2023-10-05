@@ -8,7 +8,7 @@ import datetime
 import itertools
 import sys
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
 
 from nextcord.types.guild import GatewayGuildMemberUpdate
 
@@ -48,6 +48,9 @@ if TYPE_CHECKING:
     from .types.voice import VoiceState as VoiceStatePayload
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
+
+
+TypeT = TypeVar("TypeT", bound="Type")
 
 
 class VoiceState:
@@ -140,7 +143,7 @@ class VoiceState:
         return f"<{self.__class__.__name__} {inner}>"
 
 
-def flatten_user(cls):
+def flatten_user(cls: TypeT) -> TypeT:
     for attr, value in itertools.chain(BaseUser.__dict__.items(), User.__dict__.items()):
         # ignore private/special methods
         if attr.startswith("_"):
@@ -160,7 +163,7 @@ def flatten_user(cls):
             # However I'm not sure how I feel about "functions" returning properties
             # It probably breaks something in Sphinx.
             # probably a member function by now
-            def generate_function(x, value):
+            def generate_function(x: str, value: Any):
                 # We want sphinx to properly show coroutine functions as coroutines
                 if asyncio.iscoroutinefunction(value):
 
