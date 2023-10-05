@@ -179,7 +179,7 @@ def _not_overriden(f):
 
 
 class _HelpCommandImpl(Command):
-    def __init__(self, inject, *args, **kwargs) -> None:
+    def __init__(self, inject, *args: Any, **kwargs: Any) -> None:
         super().__init__(inject.command_callback, *args, **kwargs)
         self._original = inject
         self._injected = inject

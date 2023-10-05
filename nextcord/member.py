@@ -167,7 +167,7 @@ def flatten_user(cls: TypeT) -> TypeT:
                 # We want sphinx to properly show coroutine functions as coroutines
                 if asyncio.iscoroutinefunction(value):
 
-                    async def general(self, *args, **kwargs):  # type: ignore
+                    async def general(self, *args, **kwargs: Any):  # type: ignore
                         return await getattr(self._user, x)(*args, **kwargs)
 
                 else:

@@ -119,7 +119,7 @@ def get_signature_parameters(
 
 def wrap_callback(coro):
     @functools.wraps(coro)
-    async def wrapped(*args, **kwargs):
+    async def wrapped(*args: Any, **kwargs: Any):
         try:
             ret = await coro(*args, **kwargs)
         except CommandError:
@@ -135,7 +135,7 @@ def wrap_callback(coro):
 
 def hooked_wrapped_callback(command, ctx, coro):
     @functools.wraps(coro)
-    async def wrapped(*args, **kwargs):
+    async def wrapped(*args: Any, **kwargs: Any):
         try:
             ret = await coro(*args, **kwargs)
         except CommandError:

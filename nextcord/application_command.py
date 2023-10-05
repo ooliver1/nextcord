@@ -176,7 +176,9 @@ class CallbackWrapper:
 
         return wrapper
 
-    def __init__(self, callback: Union[Callable, CallbackWrapper], *args, **kwargs) -> None:
+    def __init__(
+        self, callback: Union[Callable, CallbackWrapper], *args: Any, **kwargs: Any
+    ) -> None:
         # noinspection PyTypeChecker
         self.callback: Optional[Callable] = None
         self.modify_callbacks: List[Callable] = [self.modify]
@@ -614,7 +616,7 @@ class CallbackMixin:
 
         self.parent_cog = parent_cog
 
-    def __call__(self, interaction: Interaction[Any], *args, **kwargs):
+    def __call__(self, interaction: Interaction[Any], *args: Any, **kwargs: Any):
         """Invokes the callback, injecting ``self`` if available."""
         if self.callback is None:
             raise ValueError("Cannot call callback when it is not set.")
@@ -931,7 +933,9 @@ class CallbackMixin:
                 ) is not None:
                     await after_invoke(interaction)
 
-    async def invoke_callback(self, interaction: Interaction[Any], *args, **kwargs) -> None:
+    async def invoke_callback(
+        self, interaction: Interaction[Any], *args: Any, **kwargs: Any
+    ) -> None:
         """|coro|
         Invokes the callback, injecting ``self`` if available.
         """

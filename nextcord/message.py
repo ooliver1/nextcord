@@ -1784,7 +1784,7 @@ class Message(Hashable):
         )
         return Thread(guild=self.guild, state=self._state, data=data)
 
-    async def reply(self, content: Optional[str] = None, **kwargs) -> Message:
+    async def reply(self, content: Optional[str] = None, **kwargs: Any) -> Message:
         """|coro|
 
         A shortcut method to :meth:`.abc.Messageable.send` to reply to the

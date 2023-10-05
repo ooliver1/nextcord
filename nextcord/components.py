@@ -2,7 +2,18 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, List, Literal, Optional, Tuple, TypeVar, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from .enums import ButtonStyle, ComponentType, TextInputStyle, try_enum
 from .partial_emoji import PartialEmoji, _EmojiTag
@@ -74,7 +85,7 @@ class Component:
         return f"<{self.__class__.__name__} {attrs}>"
 
     @classmethod
-    def _raw_construct(cls, **kwargs) -> Self:
+    def _raw_construct(cls, **kwargs: Any) -> Self:
         self = cls.__new__(cls)
         for slot in get_slots(cls):
             try:

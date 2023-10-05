@@ -2495,7 +2495,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         return None
 
     @utils.copy_doc(abc.GuildChannel.move)
-    async def move(self, **kwargs) -> None:
+    async def move(self, **kwargs: Any) -> None:
         kwargs.pop("category", None)
         await super().move(**kwargs)
 

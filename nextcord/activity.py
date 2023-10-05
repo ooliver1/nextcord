@@ -197,7 +197,7 @@ class Activity(BaseActivity):
         "buttons",
     )
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.state: Optional[str] = kwargs.pop("state", None)
         self.details: Optional[str] = kwargs.pop("details", None)
