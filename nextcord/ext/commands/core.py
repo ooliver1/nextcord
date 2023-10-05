@@ -746,7 +746,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         return " ".join(reversed(entries))
 
     @property
-    def parents(self) -> List[Group]:
+    def parents(self) -> List[Group[Any, Any, Any]]:
         """List[:class:`Group`]: Retrieves the parents of this command.
 
         If the command has no parents then it returns an empty :class:`list`.

@@ -114,7 +114,7 @@ class ConversionError(CommandError):
         the ``__cause__`` attribute.
     """
 
-    def __init__(self, converter: Converter, original: Exception) -> None:
+    def __init__(self, converter: Converter[Any], original: Exception) -> None:
         self.converter: Converter = converter
         self.original: Exception = original
 
@@ -205,9 +205,11 @@ class CheckAnyFailure(CheckFailure):
         A list of check predicates that failed.
     """
 
-    def __init__(self, checks: List[CheckFailure], errors: List[Callable[[Context], bool]]) -> None:
+    def __init__(
+        self, checks: List[CheckFailure], errors: List[Callable[[Context[Any]], bool]]
+    ) -> None:
         self.checks: List[CheckFailure] = checks
-        self.errors: List[Callable[[Context], bool]] = errors
+        self.errors: List[Callable[[Context[Any]], bool]] = errors
         super().__init__("You do not have permission to run this command.")
 
 
