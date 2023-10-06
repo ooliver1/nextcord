@@ -3044,7 +3044,7 @@ class ForumTag:
         self.emoji: Optional[PartialEmoji] = partial
 
     @classmethod
-    def from_data(cls, data: ForumTagPayload) -> ForumTag:
+    def from_data(cls, data: ForumTagPayload) -> Self:
         return cls(
             id=int(data["id"]),
             name=data["name"],

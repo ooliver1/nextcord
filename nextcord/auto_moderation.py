@@ -17,6 +17,8 @@ from .object import Object
 from .utils import MISSING, get_as_snowflake
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .abc import GuildChannel, Snowflake
     from .guild import Guild
     from .member import Member
@@ -134,7 +136,7 @@ class AutoModerationTriggerMetadata:
         self.mention_raid_protection_enabled: Optional[bool] = mention_raid_protection_enabled
 
     @classmethod
-    def from_data(cls, data: TriggerMetadataPayload):
+    def from_data(cls, data: TriggerMetadataPayload) -> Self:
         keyword_filter = data.get("keyword_filter")
         regex_patterns = data.get("regex_patterns")
         presets = (
@@ -216,7 +218,7 @@ class AutoModerationActionMetadata:
         self.duration_seconds: Optional[int] = duration_seconds
 
     @classmethod
-    def from_data(cls, data: ActionMetadataPayload):
+    def from_data(cls, data: ActionMetadataPayload) -> Self:
         channel_id = get_as_snowflake(data, "channel_id")
         channel = Object(id=channel_id) if channel_id is not None else None
         duration_seconds = data.get("duration_seconds")
@@ -268,7 +270,7 @@ class AutoModerationAction:
         self.metadata: Optional[AutoModerationActionMetadata] = metadata
 
     @classmethod
-    def from_data(cls, data: AutoModerationActionPayload) -> AutoModerationAction:
+    def from_data(cls, data: AutoModerationActionPayload) -> Self:
         type = try_enum(AutoModerationActionType, data["type"])
         metadata = AutoModerationActionMetadata.from_data(data.get("metadata", {}))
         return cls(type=type, metadata=metadata)
