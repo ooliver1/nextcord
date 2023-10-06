@@ -133,9 +133,11 @@ def wrap_callback(coro):
     return wrapped
 
 
-def hooked_wrapped_callback(command, ctx, coro):
+def hooked_wrapped_callback(
+    command: Command[CogT, Any, T], ctx: Context[Any], coro: Callable[P, Coro[T]]
+) -> Callable[P, Coro[Optional[T]]]:
     @functools.wraps(coro)
-    async def wrapped(*args: Any, **kwargs: Any):
+    async def wrapped(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
         try:
             ret = await coro(*args, **kwargs)
         except CommandError:
@@ -149,7 +151,7 @@ def hooked_wrapped_callback(command, ctx, coro):
             raise CommandInvokeError(exc) from exc
         finally:
             if command._max_concurrency is not None:
-                await command._max_concurrency.release(ctx)
+                await command._max_concurrency.release(ctx.message)
 
             await command.call_after_hooks(ctx)
         return ret
@@ -910,8 +912,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             raise CheckFailure(f"The check functions for command {self.qualified_name} failed.")
 
         if self._max_concurrency is not None:
-            # For this application, context can be duck-typed as a Message
-            await self._max_concurrency.acquire(ctx)  # type: ignore
+            await self._max_concurrency.acquire(ctx.message)
 
         try:
             if self.cooldown_after_parsing:
@@ -992,8 +993,9 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         # the invoked subcommand is None.
         ctx.invoked_subcommand = None
         ctx.subcommand_passed = None
-        injected = hooked_wrapped_callback(self, ctx, self.callback)
-        await injected(*ctx.args, **ctx.kwargs)
+        # the error from this is attrocious
+        injected = hooked_wrapped_callback(self, ctx, self.callback)  # pyright: ignore
+        await injected(*ctx.args, **ctx.kwargs)  # type: ignore
 
     async def reinvoke(self, ctx: Context[Any], *, call_hooks: bool = False) -> None:
         ctx.command = self
@@ -1562,8 +1564,9 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
             ctx.invoked_subcommand = self.all_commands.get(trigger, None)
 
         if early_invoke:
-            injected = hooked_wrapped_callback(self, ctx, self.callback)
-            await injected(*ctx.args, **ctx.kwargs)
+            # the error from this is attrocious
+            injected = hooked_wrapped_callback(self, ctx, self.callback)  # pyright: ignore
+            await injected(*ctx.args, **ctx.kwargs)  # type: ignore
 
         ctx.invoked_parents.append(ctx.invoked_with)  # type: ignore
 
