@@ -1907,7 +1907,7 @@ class SlashCommandMixin(CallbackMixin[CogT, InteractionT, P, T], Generic[CogT, I
         state: ConnectionState,
         interaction: InteractionT,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
-    ):
+    ) -> None:
         if option_data is None:
             if interaction.data is None:
                 raise ValueError("Discord did not provide us interaction data")
