@@ -142,7 +142,7 @@ class Thread(Messageable, Hashable, PinsMixin):
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload) -> None:
         self._state: ConnectionState = state
-        self.guild = guild
+        self.guild: Guild = guild
         self._members: Dict[int, ThreadMember] = {}
         self._from_data(data)
 
@@ -159,18 +159,19 @@ class Thread(Messageable, Hashable, PinsMixin):
         return self.name
 
     def _from_data(self, data: ThreadPayload) -> None:
-        self.id = int(data["id"])
-        self.parent_id = int(data["parent_id"])
-        self.owner_id = int(data["owner_id"])
-        self.name = data["name"]
-        self._type = try_enum(ChannelType, data["type"])
-        self.last_message_id = get_as_snowflake(data, "last_message_id")
-        self.slowmode_delay = data.get("rate_limit_per_user", 0)
-        self.message_count = data["message_count"]
-        self.member_count = data["member_count"]
+        self.id: int = int(data["id"])
+        self.parent_id: int = int(data["parent_id"])
+        self.owner_id: int = int(data["owner_id"])
+        self.name: str = data["name"]
+        self._type: ChannelType = try_enum(ChannelType, data["type"])
+        self.last_message_id: Optional[int] = get_as_snowflake(data, "last_message_id")
+        self.slowmode_delay: int = data.get("rate_limit_per_user", 0)
+        self.message_count: int = data["message_count"]
+        self.member_count: int = data["member_count"]
         self._unroll_metadata(data["thread_metadata"])
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
+        self.me: Optional[ThreadMember]
         try:
             member = data["member"]
         except KeyError:
@@ -181,15 +182,15 @@ class Thread(Messageable, Hashable, PinsMixin):
         self.applied_tag_ids: List[int] = [int(tag_id) for tag_id in data.get("applied_tags", [])]
 
     def _unroll_metadata(self, data: ThreadMetadata) -> None:
-        self.archived = data["archived"]
-        self.archiver_id = get_as_snowflake(data, "archiver_id")
-        self.auto_archive_duration = data["auto_archive_duration"]
-        self.archive_timestamp = parse_time(data["archive_timestamp"])
-        self.locked = data.get("locked", False)
-        self.invitable = data.get("invitable", True)
-        self.create_timestamp = parse_time(data.get("create_timestamp"))
+        self.archived: bool = data["archived"]
+        self.archiver_id: Optional[int] = get_as_snowflake(data, "archiver_id")
+        self.auto_archive_duration: int = data["auto_archive_duration"]
+        self.archive_timestamp: datetime = parse_time(data["archive_timestamp"])
+        self.locked: bool = data.get("locked", False)
+        self.invitable: bool = data.get("invitable", True)
+        self.create_timestamp: Optional[datetime] = parse_time(data.get("create_timestamp"))
 
-    def _update(self, data) -> None:
+    def _update(self, data: ThreadPayload) -> None:
         with contextlib.suppress(KeyError):
             self.name = data["name"]
 
@@ -830,8 +831,8 @@ class ThreadMember(Hashable):
     )
 
     def __init__(self, parent: Thread, data: ThreadMemberPayload) -> None:
-        self.parent = parent
-        self._state = parent._state
+        self.parent: Thread = parent
+        self._state: ConnectionState = parent._state
         self._from_data(data)
 
     def __repr__(self) -> str:
@@ -840,19 +841,21 @@ class ThreadMember(Hashable):
         )
 
     def _from_data(self, data: ThreadMemberPayload) -> None:
+        self.id: int
         try:
             self.id = int(data["user_id"])
         except KeyError:
             assert self._state.self_id is not None
             self.id = self._state.self_id
 
+        self.thread_id: int
         try:
             self.thread_id = int(data["id"])
         except KeyError:
             self.thread_id = self.parent.id
 
-        self.joined_at = parse_time(data["join_timestamp"])
-        self.flags = data["flags"]
+        self.joined_at: datetime = parse_time(data["join_timestamp"])
+        self.flags: int = data["flags"]
 
     @property
     def thread(self) -> Thread:
