@@ -3168,7 +3168,7 @@ class UserApplicationCommand(
         return ""
 
     @description.setter
-    def description(self, new_desc: str):
+    def description(self, new_desc: str) -> None:
         raise ValueError("UserApplicationCommands cannot have a description set.")
 
     async def call(self, state: ConnectionState, interaction: InteractionT) -> None:
@@ -3262,7 +3262,7 @@ class MessageApplicationCommand(
         return ""
 
     @description.setter
-    def description(self, new_desc: str):
+    def description(self, new_desc: str) -> None:
         raise ValueError("MessageApplicationCommands cannot have a description set.")
 
     async def call(self, state: ConnectionState, interaction: InteractionT) -> None:
