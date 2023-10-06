@@ -6,7 +6,7 @@ import copy
 import functools
 import itertools
 import re
-from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, Mapping, Sequence, cast
+from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, List, Mapping, Sequence, TypeVar, cast
 
 import nextcord.utils
 
@@ -31,6 +31,8 @@ __all__ = (
     "DefaultHelpCommand",
     "MinimalHelpCommand",
 )
+
+AnyT = TypeVar("AnyT", bound=Any)
 
 # help -> shows info of bot on top/bottom and lists subcommands
 # help command -> shows detailed info of command
@@ -100,18 +102,18 @@ class Paginator:
         self._pages = []
 
     @property
-    def _prefix_len(self):
+    def _prefix_len(self) -> int:
         return len(self.prefix) if self.prefix else 0
 
     @property
-    def _suffix_len(self):
+    def _suffix_len(self) -> int:
         return len(self.suffix) if self.suffix else 0
 
     @property
-    def _linesep_len(self):
+    def _linesep_len(self) -> int:
         return len(self.linesep)
 
-    def add_line(self, line: str = "", *, empty: bool = False):
+    def add_line(self, line: str = "", *, empty: bool = False) -> None:
         """Adds a line to the current page.
 
         If the line exceeds the :attr:`max_size` then an exception
@@ -161,7 +163,7 @@ class Paginator:
         return total + self._count
 
     @property
-    def pages(self):
+    def pages(self) -> List[str]:
         """List[:class:`str`]: Returns the rendered list of pages."""
         # we have more than just the prefix in our current page
         if len(self._current_page) > (0 if self.prefix is None else 1):
@@ -173,7 +175,7 @@ class Paginator:
         return fmt.format(self)
 
 
-def _not_overriden(f):
+def _not_overriden(f: AnyT) -> AnyT:
     f.__help_command_not_overriden__ = True
     return f
 
