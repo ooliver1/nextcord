@@ -31,7 +31,17 @@ from .errors import (
 )
 
 if TYPE_CHECKING:
+    from typing import TypeVar
+
+    from typing_extensions import ParamSpec
+
+    from nextcord.application_command import ClientCog
     from nextcord.types.checks import ApplicationCheck, CoroFunc
+
+    InteractionT = TypeVar("InteractionT", bound=Interaction)
+    CogT = TypeVar("CogT", bound=ClientCog)
+    P = ParamSpec("P")
+    T = TypeVar("T")
 
 
 __all__ = (
@@ -71,7 +81,7 @@ class CheckWrapper(CallbackWrapper):
     def __call__(self, *args, **kwargs):
         return self.predicate(*args, **kwargs)
 
-    def modify(self, app_cmd: BaseApplicationCommand) -> None:
+    def modify(self, app_cmd: BaseApplicationCommand[Any, Any, ..., Any]) -> None:
         app_cmd.checks.append(self.predicate)
 
 
@@ -80,9 +90,9 @@ if TYPE_CHECKING:
         [
             Union[
                 CoroFunc,
-                Callable[[Interaction[Any]], bool],
-                BaseApplicationCommand,
-                SlashApplicationSubcommand,
+                Callable[[InteractionT], bool],
+                BaseApplicationCommand[CogT, InteractionT, ..., Any],
+                SlashApplicationSubcommand[CogT, InteractionT, ..., Any],
             ]
         ],
         CheckWrapper,
@@ -696,7 +706,13 @@ def is_nsfw() -> AC:
     return check(pred)
 
 
-def application_command_before_invoke(coro) -> AC:
+def application_command_before_invoke(
+    coro: Union[
+        SlashApplicationSubcommand[CogT, InteractionT, P, T],
+        BaseApplicationCommand[CogT, InteractionT, P, T],
+        CoroFunc,
+    ]
+) -> AC:
     """A decorator that registers a coroutine as a pre-invoke hook.
 
     This allows you to refer to one before invoke hook for several commands that
@@ -742,18 +758,32 @@ def application_command_before_invoke(coro) -> AC:
     """
 
     class BeforeInvokeModifier(CallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand) -> None:
+        def modify(self, app_cmd: BaseApplicationCommand[CogT, InteractionT, P, T]) -> None:
             app_cmd._callback_before_invoke = coro
 
     def decorator(
-        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
-    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, BeforeInvokeModifier]:
+        func: Union[
+            SlashApplicationSubcommand[CogT, InteractionT, P, T],
+            BaseApplicationCommand[CogT, InteractionT, P, T],
+            CoroFunc,
+        ]
+    ) -> Union[
+        SlashApplicationSubcommand[CogT, InteractionT, P, T],
+        BaseApplicationCommand[CogT, InteractionT, P, T],
+        BeforeInvokeModifier,
+    ]:
         return BeforeInvokeModifier(func)
 
     return decorator  # type: ignore
 
 
-def application_command_after_invoke(coro) -> AC:
+def application_command_after_invoke(
+    coro: Union[
+        SlashApplicationSubcommand[CogT, InteractionT, P, T],
+        BaseApplicationCommand[CogT, InteractionT, P, T],
+        CoroFunc,
+    ]
+) -> AC:
     """A decorator that registers a coroutine as a post-invoke hook.
 
     This allows you to refer to one after invoke hook for several commands that
@@ -761,12 +791,18 @@ def application_command_after_invoke(coro) -> AC:
     """
 
     class AfterInvokeModifier(CallbackWrapper):
-        def modify(self, app_cmd: BaseApplicationCommand) -> None:
+        def modify(self, app_cmd: BaseApplicationCommand[CogT, InteractionT, P, T]) -> None:
             app_cmd._callback_after_invoke = coro
 
     def decorator(
-        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
-    ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, AfterInvokeModifier]:
+        func: Union[
+            SlashApplicationSubcommand, BaseApplicationCommand[CogT, InteractionT, P, T], CoroFunc
+        ]
+    ) -> Union[
+        SlashApplicationSubcommand,
+        BaseApplicationCommand[CogT, InteractionT, P, T],
+        AfterInvokeModifier,
+    ]:
         return AfterInvokeModifier(func)
 
     return decorator  # type: ignore

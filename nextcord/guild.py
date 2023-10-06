@@ -325,7 +325,7 @@ class Guild(Hashable):
         self._scheduled_events: Dict[int, ScheduledEvent] = {}
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
-        self._application_commands: Dict[int, BaseApplicationCommand] = {}
+        self._application_commands: Dict[int, BaseApplicationCommand[Any, Any, ..., Any]] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -504,8 +504,8 @@ class Guild(Hashable):
             guild, "public_updates_channel_id"
         )
         self.nsfw_level: NSFWLevel = try_enum(NSFWLevel, guild.get("nsfw_level", 0))
-        self.approximate_presence_count = guild.get("approximate_presence_count")
-        self.approximate_member_count = guild.get("approximate_member_count")
+        self.approximate_presence_count: Optional[int] = guild.get("approximate_presence_count")
+        self.approximate_member_count: Optional[int] = guild.get("approximate_member_count")
 
         self._stage_instances: Dict[int, StageInstance] = {}
         for s in guild.get("stage_instances", []):
@@ -3588,7 +3588,9 @@ class Guild(Hashable):
         data = await self._state.http.create_event(self.id, reason=reason, **payload)
         return self._store_scheduled_event(data)
 
-    def get_application_commands(self, rollout: bool = False):
+    def get_application_commands(
+        self, rollout: bool = False
+    ) -> List[BaseApplicationCommand[Any, Any, ..., Any]]:
         """Gets all application commands registered for this guild.
 
         Parameters
@@ -3602,7 +3604,10 @@ class Guild(Hashable):
         return self._state.get_guild_application_commands(guild_id=self.id, rollout=rollout)
 
     def add_application_command(
-        self, app_cmd: BaseApplicationCommand, overwrite: bool = False, use_rollout: bool = False
+        self,
+        app_cmd: BaseApplicationCommand[Any, Any, ..., Any],
+        overwrite: bool = False,
+        use_rollout: bool = False,
     ) -> None:
         app_cmd.add_guild_rollout(self.id)
         self._state.add_application_command(app_cmd, overwrite=overwrite, use_rollout=use_rollout)
@@ -3723,11 +3728,15 @@ class Guild(Hashable):
     ) -> None:
         await self._state.register_new_application_commands(data=data, guild_id=self.id)
 
-    async def register_application_commands(self, *commands: BaseApplicationCommand) -> None:
+    async def register_application_commands(
+        self, *commands: BaseApplicationCommand[Any, Any, ..., Any]
+    ) -> None:
         for command in commands:
             await self._state.register_application_command(command, guild_id=self.id)
 
-    async def delete_application_commands(self, *commands: BaseApplicationCommand) -> None:
+    async def delete_application_commands(
+        self, *commands: BaseApplicationCommand[Any, Any, ..., Any]
+    ) -> None:
         for command in commands:
             await self._state.delete_application_command(command, guild_id=self.id)
 

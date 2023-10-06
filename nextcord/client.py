@@ -89,6 +89,9 @@ if TYPE_CHECKING:
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .voice_client import VoiceProtocol
 
+    CogT = TypeVar("CogT", bound=ClientCog)
+    InteractionT = TypeVar("InteractionT", bound=Interaction)
+
 __all__ = ("Client",)
 
 Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
@@ -338,7 +341,7 @@ class Client:
         self._rollout_register_new: bool = rollout_register_new
         self._rollout_update_known: bool = rollout_update_known
         self._rollout_all_guilds: bool = rollout_all_guilds
-        self._application_commands_to_add: Set[BaseApplicationCommand] = set()
+        self._application_commands_to_add: Set[BaseApplicationCommand[Any, Any, ..., Any]] = set()
 
         self._default_guild_ids = default_guild_ids or []
 
@@ -2166,7 +2169,9 @@ class Client:
                     f"found/associated!"
                 )
 
-    def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
+    def get_application_command(
+        self, command_id: int
+    ) -> Optional[BaseApplicationCommand[Any, Interaction[Self], ..., Any]]:
         """Gets an application command from the cache that has the given command ID.
 
         Parameters
@@ -2184,7 +2189,7 @@ class Client:
 
     def get_application_command_from_signature(
         self, name: str, cmd_type: Union[int, ApplicationCommandType], guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
+    ) -> Optional[BaseApplicationCommand[Any, Interaction[Self], ..., Any]]:
         """Gets a locally stored application command object that matches the given signature.
 
         Parameters
@@ -2208,11 +2213,15 @@ class Client:
             name=name, cmd_type=actual_type, guild_id=guild_id
         )
 
-    def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
+    def get_all_application_commands(
+        self,
+    ) -> Set[BaseApplicationCommand[Any, Interaction[Self], ..., Any]]:
         """Returns a copied set of all added :class:`BaseApplicationCommand` objects."""
         return self._connection.application_commands
 
-    def get_application_commands(self, rollout: bool = False) -> List[BaseApplicationCommand]:
+    def get_application_commands(
+        self, rollout: bool = False
+    ) -> List[BaseApplicationCommand[Any, Interaction[Self], ..., Any]]:
         """Gets registered global commands.
 
         Parameters
@@ -2229,7 +2238,7 @@ class Client:
 
     def add_application_command(
         self,
-        command: BaseApplicationCommand,
+        command: BaseApplicationCommand[CogT, InteractionT, ..., Any],
         overwrite: bool = False,
         use_rollout: bool = False,
         pre_remove: bool = True,
@@ -2482,7 +2491,9 @@ class Client:
         await self._connection.register_new_application_commands(data=data, guild_id=guild_id)
 
     async def register_application_commands(
-        self, *commands: BaseApplicationCommand, guild_id: Optional[int] = None
+        self,
+        *commands: BaseApplicationCommand[CogT, InteractionT, ..., Any],
+        guild_id: Optional[int] = None,
     ) -> None:
         """|coro|
         Registers the given application commands either for a specific guild or globally, and adds the commands to
@@ -2500,7 +2511,9 @@ class Client:
             await self._connection.register_application_command(command, guild_id=guild_id)
 
     async def delete_application_commands(
-        self, *commands: BaseApplicationCommand, guild_id: Optional[int] = None
+        self,
+        *commands: BaseApplicationCommand[CogT, InteractionT, ..., Any],
+        guild_id: Optional[int] = None,
     ) -> None:
         """|coro|
         Deletes the given application commands either from a specific guild or globally, and removes the command IDs +
@@ -2517,7 +2530,7 @@ class Client:
         for command in commands:
             await self._connection.delete_application_command(command, guild_id=guild_id)
 
-    def _get_global_commands(self) -> Set[BaseApplicationCommand]:
+    def _get_global_commands(self) -> Set[BaseApplicationCommand[Any, Interaction[Self], ..., Any]]:
         ret = set()
         for command in self._connection._application_commands:
             if command.is_global:
@@ -2525,7 +2538,9 @@ class Client:
 
         return ret
 
-    def _get_guild_rollout_commands(self) -> Dict[int, Set[BaseApplicationCommand]]:
+    def _get_guild_rollout_commands(
+        self,
+    ) -> Dict[int, Set[BaseApplicationCommand[Any, Interaction[Self], ..., Any]]]:
         ret = {}
         for command in self._connection._application_commands:
             if command.is_guild:

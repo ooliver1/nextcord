@@ -188,11 +188,18 @@ class CallbackWrapper:
     def __new__(
         cls,
         callback: Union[
-            Callable[..., Any], CallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
+            Callable[..., Any],
+            CallbackWrapper,
+            BaseApplicationCommand[CogT, InteractionT, P, T],
+            SlashApplicationSubcommand,
         ],
         *args,
         **kwargs,
-    ) -> Union[CallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand]:
+    ) -> Union[
+        CallbackWrapper,
+        BaseApplicationCommand[CogT, InteractionT, P, T],
+        SlashApplicationSubcommand,
+    ]:
         wrapper = super(CallbackWrapper, cls).__new__(cls)
         wrapper.__init__(callback, *args, **kwargs)
         if isinstance(callback, (BaseApplicationCommand, SlashApplicationSubcommand)):
@@ -213,7 +220,7 @@ class CallbackWrapper:
         else:
             self.callback = callback
 
-    def modify(self, app_cmd: BaseApplicationCommand):
+    def modify(self, app_cmd: BaseApplicationCommand[CogT, InteractionT, ..., Any]):
         raise NotImplementedError
 
 
@@ -434,12 +441,18 @@ class BaseCommandOption(ApplicationCommandOption):
     def __init__(
         self,
         parameter: Parameter,
-        command: Union[BaseApplicationCommand, SlashApplicationSubcommand],
+        command: Union[
+            BaseApplicationCommand[CogT, InteractionT, P, T],
+            SlashApplicationSubcommand[CogT, InteractionT, P, T],
+        ],
         parent_cog: Optional[ClientCog] = None,
     ) -> None:
         ApplicationCommandOption.__init__(self)
         self.parameter: Parameter = parameter
-        self.command: Union[BaseApplicationCommand, SlashApplicationSubcommand] = command
+        self.command: Union[
+            BaseApplicationCommand[CogT, InteractionT, P, T],
+            SlashApplicationSubcommand[CogT, InteractionT, P, T],
+        ] = command
         self.functional_name: str = parameter.name
         """Name of the kwarg in the function/method"""
         self.parent_cog: Optional[ClientCog] = parent_cog
@@ -509,7 +522,7 @@ class Mentionable(OptionConverter):
 
 class ClientCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
-    __cog_application_commands__: List[BaseApplicationCommand]
+    __cog_application_commands__: List[BaseApplicationCommand[Self, Any, ..., Any]]
 
     def __new__(cls, *_args: Any, **_kwargs: Any) -> Self:
         new_cls = super(ClientCog, cls).__new__(cls)
@@ -543,7 +556,7 @@ class ClientCog:
                     self.__cog_application_commands__.append(value)
 
     @property
-    def application_commands(self) -> List[BaseApplicationCommand]:
+    def application_commands(self) -> List[BaseApplicationCommand[Self, Any, ..., Any]]:
         """Provides the list of application commands in this cog. Subcommands are not included."""
         return self.__cog_application_commands__
 

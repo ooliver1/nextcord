@@ -34,6 +34,7 @@ __all__ = (
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
+    from typing_extensions import Self
 
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
@@ -184,7 +185,7 @@ class Interaction(Hashable, Generic[ClientT]):
         self._original_message: Optional[InteractionMessage] = None
         self.attached: InteractionAttached = InteractionAttached()
         self.application_command: Optional[
-            Union[SlashApplicationSubcommand, BaseApplicationCommand]
+            Union[SlashApplicationSubcommand, BaseApplicationCommand[Any, Self, ..., Any]]
         ] = None
         self._background_tasks: Set[asyncio.Task] = set()
         self._from_data(data)
@@ -261,7 +262,8 @@ class Interaction(Hashable, Generic[ClientT]):
         return utils.utcnow() > self.expires_at
 
     def _set_application_command(
-        self, app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand]
+        self,
+        app_cmd: Union[SlashApplicationSubcommand, BaseApplicationCommand[Any, Self, ..., Any]],
     ) -> None:
         self.application_command = app_cmd
 

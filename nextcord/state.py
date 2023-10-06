@@ -307,14 +307,14 @@ class ConnectionState:
         self._status: Optional[str] = raw_status
         self._intents: Intents = intents
         # A set of all application command objects available. Set because duplicates should not exist.
-        self._application_commands: Set[BaseApplicationCommand] = set()
+        self._application_commands: Set[BaseApplicationCommand[Any, Any, ..., Any]] = set()
         # A dictionary of all available unique command signatures. Compiled at runtime because needing to iterate
         # through all application commands would take far more time. If memory is problematic, perhaps this can go?
         self._application_command_signatures: Dict[
-            Tuple[Optional[str], int, Optional[int]], BaseApplicationCommand
+            Tuple[Optional[str], int, Optional[int]], BaseApplicationCommand[Any, Any, ..., Any]
         ] = {}
         # A dictionary of Discord Application Command ID's and the ApplicationCommand object they correspond to.
-        self._application_command_ids: Dict[int, BaseApplicationCommand] = {}
+        self._application_command_ids: Dict[int, BaseApplicationCommand[Any, Any, ..., Any]] = {}
 
         if not intents.members or member_cache_flags._empty:
             self.store_user = self.create_user
@@ -603,23 +603,25 @@ class ConnectionState:
         return channel or PartialMessageable(state=self, id=channel_id), guild
 
     @property
-    def application_commands(self) -> Set[BaseApplicationCommand]:
+    def application_commands(self) -> Set[BaseApplicationCommand[Any, Any, ..., Any]]:
         """Gets a copy of the ApplicationCommand object set. If the original is given out and modified, massive desyncs
         may occur. This should be used internally as well if size-changed-during-iteration is a worry.
         """
         return self._application_commands.copy()
 
-    def get_application_command(self, command_id: int) -> Optional[BaseApplicationCommand]:
+    def get_application_command(
+        self, command_id: int
+    ) -> Optional[BaseApplicationCommand[Any, Any, ..., Any]]:
         return self._application_command_ids.get(command_id, None)
 
     def get_application_command_from_signature(
         self, name: Optional[str], cmd_type: int, guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
+    ) -> Optional[BaseApplicationCommand[Any, Any, ..., Any]]:
         return self._application_command_signatures.get((name, cmd_type, guild_id), None)
 
     def get_guild_application_commands(
         self, guild_id: Optional[int] = None, rollout: bool = False
-    ) -> List[BaseApplicationCommand]:
+    ) -> List[BaseApplicationCommand[Any, Any, ..., Any]]:
         """Gets all commands that have the given guild ID. If guild_id is None, all guild commands are returned. if
         rollout is True, guild_ids_to_rollout is used.
         """
@@ -633,7 +635,7 @@ class ConnectionState:
 
     def get_global_application_commands(
         self, rollout: bool = False
-    ) -> List[BaseApplicationCommand]:
+    ) -> List[BaseApplicationCommand[Any, Any, ..., Any]]:
         """Gets all commands that are registered globally. If rollout is True, is_global is used."""
         return [
             app_cmd
@@ -643,7 +645,7 @@ class ConnectionState:
 
     def add_application_command(
         self,
-        command: BaseApplicationCommand,
+        command: BaseApplicationCommand[Any, Any, ..., Any],
         *,
         overwrite: bool = False,
         use_rollout: bool = False,
@@ -699,7 +701,9 @@ class ConnectionState:
         # TODO: Add the command to guilds. Should it? Check if it does in the Guild add.
         self._application_commands.add(command)
 
-    def remove_application_command(self, command: BaseApplicationCommand) -> None:
+    def remove_application_command(
+        self, command: BaseApplicationCommand[Any, Any, ..., Any]
+    ) -> None:
         """Removes the command and all signatures + associated IDs from the state.
         Safe to call with commands that aren't in the state.
 
@@ -1072,7 +1076,7 @@ class ConnectionState:
                 await self.register_application_command(app_cmd, guild_id)
 
     async def register_application_command(
-        self, command: BaseApplicationCommand, guild_id: Optional[int] = None
+        self, command: BaseApplicationCommand[Any, Any, ..., Any], guild_id: Optional[int] = None
     ) -> None:
         """|coro|
         Registers the given application command either for a specific guild or globally and adds the command to the bot.
@@ -1109,7 +1113,7 @@ class ConnectionState:
         self.add_application_command(command, pre_remove=False)
 
     async def delete_application_command(
-        self, command: BaseApplicationCommand, guild_id: Optional[int] = None
+        self, command: BaseApplicationCommand[Any, Any, ..., Any], guild_id: Optional[int] = None
     ) -> None:
         """|coro|
         Deletes the given application from Discord for the given guild ID or globally, then removes the signature and
