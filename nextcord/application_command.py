@@ -1381,7 +1381,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
             autocomplete=autocomplete,
         )
 
-        self.autocomplete_callback: Optional[Callable] = autocomplete_callback
+        self.autocomplete_callback: Optional[AutocompleteCallback] = autocomplete_callback
         self.default: Any = default
         self._verify: bool = verify
         if self._verify:
@@ -1458,7 +1458,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             cmd_arg = SlashOption()
             cmd_arg_given = False
 
-        self.name = cmd_arg.name or parameter.name
+        self.name: Optional[str] = cmd_arg.name or parameter.name
         # Use the given name, or default to the parameter name.
         # typehint_origin = typing.get_origin(parameter.annotation)  # noqa: ERA001
         # TODO: Once Python 3.10 is standard, use this.
@@ -1576,23 +1576,30 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 f"| {parameter.annotation}"
             )
 
-        self.name_localizations = cmd_arg.name_localizations
-        self._description = cmd_arg.description
-        self.description_localizations = cmd_arg.description_localizations
-        self.choice_localizations = cmd_arg.choice_localizations
+        self.name_localizations: Optional[
+            Dict[Union[str, Locale], str]
+        ] = cmd_arg.name_localizations
+        self._description: Optional[str] = cmd_arg.description
+        self.description_localizations: Optional[
+            Dict[Union[str, Locale], str]
+        ] = cmd_arg.description_localizations
+        self.choice_localizations: Optional[
+            Dict[str, Dict[Union[Locale, str], str]]
+        ] = cmd_arg.choice_localizations
 
-        self.min_value = cmd_arg.min_value
-        self.max_value = cmd_arg.max_value
-        self.min_length = cmd_arg.min_length
-        self.max_length = cmd_arg.max_length
-        self.autocomplete = cmd_arg.autocomplete
-        self.autocomplete_callback = cmd_arg.autocomplete_callback
+        self.min_value: Optional[float] = cmd_arg.min_value
+        self.max_value: Optional[float] = cmd_arg.max_value
+        self.min_length: Optional[int] = cmd_arg.min_length
+        self.max_length: Optional[int] = cmd_arg.max_length
+        self.autocomplete: Optional[bool] = cmd_arg.autocomplete
+        self.autocomplete_callback: Optional[AutocompleteCallback] = cmd_arg.autocomplete_callback
         if self.autocomplete_callback and self.autocomplete is None:
             # If they didn't explicitly enable autocomplete but did add an autocomplete callback...
             self.autocomplete = True
         if self.autocomplete_callback:
             self.from_autocomplete_callback(self.autocomplete_callback)
 
+        self.required: bool
         if cmd_arg.required is not None:
             # If the user manually set if it's required...
             self.required = cmd_arg.required
@@ -1610,11 +1617,16 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # remain intuitive by following that standard.
             self.required = True
 
-        self.type = annotation_type
-        self.choices = cmd_arg.choices or annotation_choices or None
-        self.channel_types = cmd_arg.channel_types or annotation_channel_types or None
+        self.type: ApplicationCommandOptionType = annotation_type
+        self.choices: Optional[Union[Dict[str, OptionType], Iterable[OptionType]]] = (
+            cmd_arg.choices or annotation_choices or None
+        )
+        self.channel_types: Optional[List[ChannelType]] = (
+            cmd_arg.channel_types or annotation_channel_types or None
+        )
         self.converters: List[OptionConverter] = annotation_converters
 
+        self.default: Optional[Any]
         if cmd_arg_given is False and parameter.default is not parameter.empty:
             self.default = parameter.default
         else:
