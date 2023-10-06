@@ -71,12 +71,18 @@ from .webhook import Webhook
 from .widget import Widget
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing_extensions import Concatenate, ParamSpec, Self
 
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import BaseApplicationCommand, ClientCog
+    from .application_command import (
+        BaseApplicationCommand,
+        ClientCog,
+        MessageApplicationCommand,
+        SlashApplicationCommand,
+        UserApplicationCommand,
+    )
     from .asset import Asset
     from .channel import DMChannel
     from .enums import Locale
@@ -91,6 +97,9 @@ if TYPE_CHECKING:
 
     CogT = TypeVar("CogT", bound=ClientCog)
     InteractionT = TypeVar("InteractionT", bound=Interaction)
+    T = TypeVar("T")
+    P = ParamSpec("P")
+    CoroT = Coroutine[Any, Any, T]
 
 __all__ = ("Client",)
 
@@ -2665,7 +2674,15 @@ class Client:
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
         force_global: bool = False,
-    ):
+    ) -> Callable[
+        [
+            Union[
+                Callable[Concatenate[CogT, InteractionT, P], CoroT[T]],
+                Callable[Concatenate[InteractionT, P], CoroT[T]],
+            ]
+        ],
+        UserApplicationCommand[CogT, InteractionT, P, T],
+    ]:
         """Creates a User context command from the decorated function.
 
         Parameters
@@ -2695,7 +2712,12 @@ class Client:
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
-        def decorator(func: Callable):
+        def decorator(
+            func: Union[
+                Callable[Concatenate[CogT, InteractionT, P], CoroT[T]],
+                Callable[Concatenate[InteractionT, P], CoroT[T]],
+            ]
+        ) -> UserApplicationCommand[CogT, InteractionT, P, T]:
             result = user_command(
                 name=name,
                 name_localizations=name_localizations,
@@ -2720,7 +2742,15 @@ class Client:
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
         force_global: bool = False,
-    ):
+    ) -> Callable[
+        [
+            Union[
+                Callable[Concatenate[CogT, InteractionT, P], CoroT[T]],
+                Callable[Concatenate[InteractionT, P], CoroT[T]],
+            ]
+        ],
+        MessageApplicationCommand[CogT, InteractionT, P, T],
+    ]:
         """Creates a Message context command from the decorated function.
 
         Parameters
@@ -2750,7 +2780,12 @@ class Client:
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
-        def decorator(func: Callable):
+        def decorator(
+            func: Union[
+                Callable[Concatenate[CogT, InteractionT, P], CoroT[T]],
+                Callable[Concatenate[InteractionT, P], CoroT[T]],
+            ]
+        ) -> MessageApplicationCommand[CogT, InteractionT, P, T]:
             result = message_command(
                 name=name,
                 name_localizations=name_localizations,
@@ -2776,7 +2811,15 @@ class Client:
         nsfw: bool = False,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         force_global: bool = False,
-    ):
+    ) -> Callable[
+        [
+            Union[
+                Callable[Concatenate[CogT, InteractionT, P], CoroT[T]],
+                Callable[Concatenate[InteractionT, P], CoroT[T]],
+            ]
+        ],
+        SlashApplicationCommand[CogT, InteractionT, P, T],
+    ]:
         """Creates a Slash application command from the decorated function.
 
         Parameters
@@ -2812,7 +2855,12 @@ class Client:
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
         """
 
-        def decorator(func: Callable):
+        def decorator(
+            func: Union[
+                Callable[Concatenate[CogT, InteractionT, P], CoroT[T]],
+                Callable[Concatenate[InteractionT, P], CoroT[T]],
+            ]
+        ) -> SlashApplicationCommand[CogT, InteractionT, P, T]:
             result = slash_command(
                 name=name,
                 name_localizations=name_localizations,
