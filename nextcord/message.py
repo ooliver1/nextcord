@@ -606,6 +606,7 @@ class MessageInteraction(Hashable):
         self.id: int = int(data["id"])
         self.type: int = data["type"]
         self.name: str = data["name"]
+        self.user: Union[Member, User]
         if "member" in data and guild is not None:
             self.user = Member(
                 state=self._state, guild=guild, data={**data["member"], "user": data["user"]}
