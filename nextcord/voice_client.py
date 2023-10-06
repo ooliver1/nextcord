@@ -215,7 +215,7 @@ class VoiceClient(VoiceProtocol):
         super().__init__(client, channel)
         state = client._connection
         self.token: str = MISSING
-        self.socket = MISSING
+        self.socket: socket.socket = MISSING
         self.loop: asyncio.AbstractEventLoop = state.loop
         self._state: ConnectionState = state
         # this will be used in the AudioPlayer thread
@@ -264,7 +264,7 @@ class VoiceClient(VoiceProtocol):
     # connection related
 
     async def on_voice_state_update(self, data: GuildVoiceStatePayload) -> None:
-        self.session_id = data["session_id"]
+        self.session_id: str = data["session_id"]
         channel_id = cast(Optional[Union[str, int]], data["channel_id"])
 
         if not self._handshaking or self._potentially_reconnecting:
