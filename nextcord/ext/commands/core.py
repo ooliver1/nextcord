@@ -487,16 +487,20 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             Callable[Concatenate[Context, P], Coro[T]],
         ],
     ) -> None:
-        self._callback = function
+        self._callback: Union[
+            Callable[Concatenate[CogT, Context, P], Coro[T]],
+            Callable[Concatenate[Context, P], Coro[T]],
+        ] = function
         unwrap = unwrap_function(function)
-        self.module = unwrap.__module__
+        # TODO: kinda weirded out by how module is set here, called elsewhere by `self.callback = `
+        self.module: str = unwrap.__module__
 
         try:
             globalns = unwrap.__globals__
         except AttributeError:
             globalns = {}
 
-        self.params = get_signature_parameters(function, globalns)
+        self.params: Dict[str, inspect.Parameter] = get_signature_parameters(function, globalns)
 
     def add_check(self, func: Check) -> None:
         """Adds a check to the command.
