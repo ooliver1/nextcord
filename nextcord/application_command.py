@@ -15,6 +15,7 @@ from typing import (
     ClassVar,
     Coroutine,
     Dict,
+    Generic,
     Iterable,
     List,
     Literal,
@@ -56,6 +57,13 @@ from .user import User
 from .utils import MISSING, find, maybe_coroutine, parse_docstring
 
 if TYPE_CHECKING:
+    from typing_extensions import ParamSpec
+
+P = ParamSpec("P") if TYPE_CHECKING else TypeVar("P")
+T = TypeVar("T")
+CogT = TypeVar("CogT", bound="ClientCog")
+
+if TYPE_CHECKING:
     from typing_extensions import Concatenate, ParamSpec, Self
 
     from .abc import Snowflake
@@ -68,8 +76,7 @@ if TYPE_CHECKING:
     )
 
     _CustomTypingMetaBase = Any
-    P = ParamSpec("P")
-    T = TypeVar("T")
+
     Coro = Coroutine[Any, Any, T]
     OptionType = Union[float, str]
     AutocompleteReturn = Optional[Union[List[str], Dict[str, OptionType]]]
@@ -83,6 +90,7 @@ if TYPE_CHECKING:
     ]
     AutocompleteCallback = Union[AutocompleteNoCog, AutocompleteCog]
     AutocompleteT = TypeVar("AutocompleteT", bound=AutocompleteCallback)
+    InteractionT = TypeVar("InteractionT", bound=Interaction[Any])
 else:
     _CustomTypingMetaBase = object
     # `ellipsis` is a type-checking only variable. This assignment avoids ruff `F821`
@@ -180,7 +188,7 @@ class CallbackWrapper:
     def __new__(
         cls,
         callback: Union[
-            Callable, CallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
+            Callable[..., Any], CallbackWrapper, BaseApplicationCommand, SlashApplicationSubcommand
         ],
         *args,
         **kwargs,
@@ -194,11 +202,11 @@ class CallbackWrapper:
         return wrapper
 
     def __init__(
-        self, callback: Union[Callable, CallbackWrapper], *args: Any, **kwargs: Any
+        self, callback: Union[Callable[..., Any], CallbackWrapper], *args: Any, **kwargs: Any
     ) -> None:
         # noinspection PyTypeChecker
-        self.callback: Optional[Callable] = None
-        self.modify_callbacks: List[Callable] = [self.modify]
+        self.callback: Optional[Callable[..., Any]] = None
+        self.modify_callbacks: List[Callable[..., Any]] = [self.modify]
         if isinstance(callback, CallbackWrapper):
             self.callback = callback.callback
             self.modify_callbacks += callback.modify_callbacks
@@ -210,7 +218,10 @@ class CallbackWrapper:
 
 
 class CallbackWrapperMixin:
-    def __init__(self, callback: Optional[Union[Callable, CallbackWrapper]]) -> None:
+    def __init__(
+        self,
+        callback: Optional[Union[Callable[..., Any], CallbackWrapper]],
+    ) -> None:
         """Adds very basic callback wrapper support.
 
         If you are a normal user, you shouldn't be using this.
@@ -601,12 +612,19 @@ class MissingApplicationCommandParametersWarning(UserWarning):
     """
 
 
-class CallbackMixin:
+class CallbackMixin(Generic[CogT, InteractionT, P, T]):
     name: Optional[str]
     options: Dict[str, BaseCommandOption]
 
     def __init__(
-        self, callback: Optional[Callable] = None, parent_cog: Optional[ClientCog] = None
+        self,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
+        parent_cog: Optional[CogT] = None,
     ) -> None:
         """Contains code specific for adding callback support to a command class.
 
@@ -619,7 +637,12 @@ class CallbackMixin:
         parent_cog: Optional[:class:`ClientCog`]
             Class that the callback resides on. Will be passed into the callback if provided.
         """
-        self.callback: Optional[Callable] = callback
+        self.callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = callback
         self._callback_before_invoke: Optional[ApplicationHook] = None
         self._callback_after_invoke: Optional[ApplicationHook] = None
         self.error_callback: Optional[Callable] = None
@@ -631,17 +654,21 @@ class CallbackMixin:
             if not asyncio.iscoroutinefunction(self.callback):
                 raise TypeError(f"{self.error_name} Callback must be a coroutine")
 
-        self.parent_cog = parent_cog
+        self.parent_cog: Optional[CogT] = parent_cog
 
-    def __call__(self, interaction: Interaction[Any], *args: Any, **kwargs: Any):
+    async def __call__(self, interaction: InteractionT, *args: P.args, **kwargs: P.kwargs) -> T:
         """Invokes the callback, injecting ``self`` if available."""
         if self.callback is None:
             raise ValueError("Cannot call callback when it is not set.")
 
         if self.parent_cog:
-            return self.callback(self.parent_cog, interaction, *args, **kwargs)
+            return await cast(
+                "Callable[Concatenate[CogT, InteractionT, P], Coro[T]]", self.callback
+            )(self.parent_cog, interaction, *args, **kwargs)
 
-        return self.callback(interaction, *args, **kwargs)
+        return await cast("Callable[Concatenate[InteractionT, P], Coro[T]]", self.callback)(
+            interaction, *args, **kwargs
+        )
 
     @property
     def error_name(self) -> str:
@@ -726,7 +753,12 @@ class CallbackMixin:
 
     def from_callback(
         self,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         option_class: Optional[Type[BaseCommandOption]] = BaseCommandOption,
     ) -> None:
         """Creates objects of type ``option_class`` with the parameters of the function, and stores them in
@@ -831,7 +863,7 @@ class CallbackMixin:
             _log.error("Error creating from callback %s: %s", self.error_name, e)
             raise e
 
-    async def can_run(self, interaction: Interaction[Any]) -> bool:
+    async def can_run(self, interaction: InteractionT) -> bool:
         """|coro|
 
         Checks if the command can be executed by checking all the predicates
@@ -896,7 +928,7 @@ class CallbackMixin:
     async def invoke_callback_with_hooks(
         self,
         state: ConnectionState,
-        interaction: Interaction[Any],
+        interaction: InteractionT,
         args: Optional[tuple] = None,
         kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -950,9 +982,7 @@ class CallbackMixin:
                 ) is not None:
                     await after_invoke(interaction)
 
-    async def invoke_callback(
-        self, interaction: Interaction[Any], *args: Any, **kwargs: Any
-    ) -> None:
+    async def invoke_callback(self, interaction: InteractionT, *args: Any, **kwargs: Any) -> None:
         """|coro|
         Invokes the callback, injecting ``self`` if available.
         """
@@ -1767,14 +1797,22 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         return value
 
 
-class SlashCommandMixin(CallbackMixin):
+class SlashCommandMixin(CallbackMixin[CogT, InteractionT, P, T], Generic[CogT, InteractionT, P, T]):
     if TYPE_CHECKING:
         _description: Optional[str]
         command_ids: Dict[Optional[int], int]
         qualified_name: str
-        _children: Dict[str, SlashApplicationSubcommand]
 
-    def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]) -> None:
+    def __init__(
+        self,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ],
+        parent_cog: Optional[ClientCog],
+    ) -> None:
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         self.options: Dict[str, SlashCommandOption] = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
@@ -1799,10 +1837,17 @@ class SlashCommandMixin(CallbackMixin):
 
     def from_callback(
         self,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         option_class: Optional[Type[SlashCommandOption]] = SlashCommandOption,
-    ):
-        CallbackMixin.from_callback(self, callback=callback, option_class=option_class)
+    ) -> None:
+        CallbackMixin[CogT, InteractionT, P, T].from_callback(
+            self, callback=callback, option_class=option_class
+        )
         # Right now, only slash commands can have descriptions. If User/Message commands gain descriptions, move
         #  this to CallbackMixin.
         if callback is None:
@@ -1848,7 +1893,7 @@ class SlashCommandMixin(CallbackMixin):
     async def call_slash(
         self,
         state: ConnectionState,
-        interaction: Interaction[Any],
+        interaction: InteractionT,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ):
         if option_data is None:
@@ -1904,7 +1949,11 @@ class SlashCommandMixin(CallbackMixin):
         return f"</{self.qualified_name}:{command_id}>"
 
 
-class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
+class BaseApplicationCommand(
+    CallbackMixin[CogT, InteractionT, P, T],
+    CallbackWrapperMixin,
+    Generic[CogT, InteractionT, P, T],
+):
     """Base class for all application commands.
 
     Attributes
@@ -1926,12 +1975,17 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         cmd_type: ApplicationCommandType,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
-        parent_cog: Optional[ClientCog] = None,
+        parent_cog: Optional[CogT] = None,
         force_global: bool = False,
     ) -> None:
         """Base application command class that all specific application command classes should subclass. All common
@@ -2342,7 +2396,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         return True
 
-    def is_interaction_valid(self, interaction: Interaction[Any]) -> bool:
+    def is_interaction_valid(self, interaction: InteractionT) -> bool:
         """Checks if the interaction given is possibly valid for this command.
         If the command has more parameters (especially optionals) than the interaction coming in, this may cause a
         desync between your bot and Discord.
@@ -2506,7 +2560,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
     def from_callback(
         self,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         option_class: Optional[Type[BaseCommandOption]] = BaseCommandOption,
     ) -> None:
         super().from_callback(callback=callback, option_class=option_class)
@@ -2523,7 +2582,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """
         await self.call(self._state, interaction)  # type: ignore
 
-    async def call(self, state: ConnectionState, interaction: Interaction[Any]) -> None:
+    async def call(self, state: ConnectionState, interaction: InteractionT) -> None:
         """|coro|
         Calls the callback via the given :class:`Interaction`, using the given :class:`ConnectionState` to get resolved
         objects if needed and available.
@@ -2565,7 +2624,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         return self.get_payload(None)
 
 
-class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, CallbackWrapperMixin):
+class SlashApplicationSubcommand(
+    SlashCommandMixin[CogT, InteractionT, P, T],
+    AutocompleteCommandMixin,
+    CallbackWrapperMixin,
+    Generic[CogT, InteractionT, P, T],
+):
     """Class representing a subcommand or subcommand group of a slash command."""
 
     def __init__(
@@ -2576,7 +2640,12 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         cmd_type: ApplicationCommandOptionType,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand, None] = None,
         parent_cog: Optional[ClientCog] = None,
         inherit_hooks: bool = False,
@@ -2641,7 +2710,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
     async def call(
         self,
         state: ConnectionState,
-        interaction: Interaction[Any],
+        interaction: InteractionT,
         option_data: Optional[List[ApplicationCommandInteractionDataOption]],
     ) -> None:
         """|coro|
@@ -2711,11 +2780,18 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
 
     def from_callback(
         self,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         option_class: Type[SlashCommandOption] = SlashCommandOption,
         call_children: bool = True,
     ) -> None:
-        SlashCommandMixin.from_callback(self, callback=callback, option_class=option_class)
+        SlashCommandMixin[CogT, InteractionT, P, T].from_callback(
+            self, callback=callback, option_class=option_class
+        )
         if call_children:
             for child in self.children.values():
                 child.from_callback(
@@ -2802,7 +2878,12 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         return self.parent_cmd.command_ids if self.parent_cmd else {}
 
 
-class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, AutocompleteCommandMixin):
+class SlashApplicationCommand(
+    SlashCommandMixin[CogT, InteractionT, P, T],
+    BaseApplicationCommand[CogT, InteractionT, P, T],
+    AutocompleteCommandMixin,
+    Generic[CogT, InteractionT, P, T],
+):
     """Class representing a slash command."""
 
     def __init__(
@@ -2812,12 +2893,17 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
-        parent_cog: Optional[ClientCog] = None,
+        parent_cog: Optional[CogT] = None,
         force_global: bool = False,
     ) -> None:
         """Represents a Slash Application Command built from the given callback, able to be registered to multiple
@@ -2894,7 +2980,7 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
         return ret
 
-    async def call(self, state: ConnectionState, interaction: Interaction[Any]) -> None:
+    async def call(self, state: ConnectionState, interaction: InteractionT) -> None:
         if interaction.data is None:
             raise ValueError("Discord did not provide us interaction data")
 
@@ -2913,12 +2999,19 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
 
     def from_callback(
         self,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         option_class: Type[SlashCommandOption] = SlashCommandOption,
         call_children: bool = True,
     ) -> None:
-        BaseApplicationCommand.from_callback(self, callback=callback, option_class=option_class)
-        SlashCommandMixin.from_callback(self, callback=callback)
+        BaseApplicationCommand[CogT, InteractionT, P, T].from_callback(
+            self, callback=callback, option_class=option_class
+        )
+        SlashCommandMixin[CogT, InteractionT, P, T].from_callback(self, callback=callback)
         AutocompleteCommandMixin.from_autocomplete(self)
         if call_children and self.children:
             for child in self.children.values():
@@ -2978,7 +3071,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         return decorator
 
 
-class UserApplicationCommand(BaseApplicationCommand):
+class UserApplicationCommand(
+    BaseApplicationCommand[CogT, InteractionT, P, T], Generic[CogT, InteractionT, P, T]
+):
     """Class representing a user context menu command."""
 
     def __init__(
@@ -2986,12 +3081,17 @@ class UserApplicationCommand(BaseApplicationCommand):
         name: Optional[str] = None,
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
-        parent_cog: Optional[ClientCog] = None,
+        parent_cog: Optional[CogT] = None,
         force_global: bool = False,
     ) -> None:
         """Represents a User Application Command that will give the user to the given callback, able to be registered to
@@ -3046,21 +3146,28 @@ class UserApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("UserApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: Interaction[Any]) -> None:
+    async def call(self, state: ConnectionState, interaction: InteractionT) -> None:
         await self.invoke_callback_with_hooks(
             state, interaction, args=(get_users_from_interaction(state, interaction)[0],)
         )
 
     def from_callback(
         self,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         option_class: Optional[Type[BaseCommandOption]] = None,
     ) -> None:
         super().from_callback(callback, option_class=option_class)
         CallbackWrapperMixin.modify(self)
 
 
-class MessageApplicationCommand(BaseApplicationCommand):
+class MessageApplicationCommand(
+    BaseApplicationCommand[CogT, InteractionT, P, T], Generic[CogT, InteractionT, P, T]
+):
     """Class representing a message context menu command."""
 
     def __init__(
@@ -3068,12 +3175,17 @@ class MessageApplicationCommand(BaseApplicationCommand):
         name: Optional[str] = None,
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         guild_ids: Optional[Iterable[int]] = None,
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
-        parent_cog: Optional[ClientCog] = None,
+        parent_cog: Optional[CogT] = None,
         force_global: bool = False,
     ) -> None:
         """Represents a Message Application Command that will give the message to the given callback, able to be
@@ -3128,14 +3240,19 @@ class MessageApplicationCommand(BaseApplicationCommand):
     def description(self, new_desc: str):
         raise ValueError("MessageApplicationCommands cannot have a description set.")
 
-    async def call(self, state: ConnectionState, interaction: Interaction[Any]) -> None:
+    async def call(self, state: ConnectionState, interaction: InteractionT) -> None:
         await self.invoke_callback_with_hooks(
             state, interaction, args=(get_messages_from_interaction(state, interaction)[0],)
         )
 
     def from_callback(
         self,
-        callback: Optional[Callable] = None,
+        callback: Optional[
+            Union[
+                Callable[Concatenate[InteractionT, P], Coro[T]],
+                Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            ]
+        ] = None,
         option_class: Optional[Type[BaseCommandOption]] = None,
     ) -> None:
         super().from_callback(callback, option_class=option_class)
@@ -3153,7 +3270,15 @@ def slash_command(
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
     force_global: bool = False,
-):
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            Callable[Concatenate[InteractionT, P], Coro[T]],
+        ]
+    ],
+    SlashApplicationCommand[CogT, InteractionT, P, T],
+]:
     """Creates a Slash application command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
 
@@ -3194,7 +3319,12 @@ def slash_command(
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
-    def decorator(func: Callable) -> SlashApplicationCommand:
+    def decorator(
+        func: Union[
+            Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            Callable[Concatenate[InteractionT, P], Coro[T]],
+        ]
+    ) -> SlashApplicationCommand[CogT, InteractionT, P, T]:
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
@@ -3223,7 +3353,15 @@ def message_command(
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
     force_global: bool = False,
-):
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            Callable[Concatenate[InteractionT, P], Coro[T]],
+        ]
+    ],
+    MessageApplicationCommand[CogT, InteractionT, P, T],
+]:
     """Creates a Message context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
 
@@ -3254,7 +3392,12 @@ def message_command(
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
-    def decorator(func: Callable) -> MessageApplicationCommand:
+    def decorator(
+        func: Union[
+            Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            Callable[Concatenate[InteractionT, P], Coro[T]],
+        ]
+    ) -> MessageApplicationCommand[CogT, InteractionT, P, T]:
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
@@ -3281,7 +3424,15 @@ def user_command(
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
     force_global: bool = False,
-):
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            Callable[Concatenate[InteractionT, P], Coro[T]],
+        ]
+    ],
+    UserApplicationCommand[CogT, InteractionT, P, T],
+]:
     """Creates a User context command from the decorated function.
     Used inside :class:`ClientCog`'s or something that subclasses it.
 
@@ -3312,7 +3463,12 @@ def user_command(
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
     """
 
-    def decorator(func: Callable) -> UserApplicationCommand:
+    def decorator(
+        func: Union[
+            Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
+            Callable[Concatenate[InteractionT, P], Coro[T]],
+        ]
+    ) -> UserApplicationCommand[CogT, InteractionT, P, T]:
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
@@ -3330,7 +3486,9 @@ def user_command(
     return decorator
 
 
-def check_dictionary_values(dict1: Dict[str, T], dict2: Dict[str, T], *keywords: str) -> bool:
+def check_dictionary_values(
+    dict1: Dict[str, Coro[T]], dict2: Dict[str, Coro[T]], *keywords: str
+) -> bool:
     """Helper function to quickly check if 2 dictionaries share the equal value for the same keyword(s).
     Used primarily for checking against the registered command data from Discord.
 
@@ -3364,7 +3522,7 @@ def check_dictionary_values(dict1: Dict[str, T], dict2: Dict[str, T], *keywords:
     return True
 
 
-def deep_dictionary_check(dict1: Dict[str, T], dict2: Dict[str, T]) -> bool:
+def deep_dictionary_check(dict1: Dict[str, Coro[T]], dict2: Dict[str, Coro[T]]) -> bool:
     """Used to check if all keys and values between two dicts are equal, and recurses if it encounters a nested dict."""
     if dict1.keys() != dict2.keys():
         _log.debug(
