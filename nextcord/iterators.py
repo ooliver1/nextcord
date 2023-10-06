@@ -286,6 +286,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
 
         self._filter: Optional[Callable[[MessagePayload], bool]] = None  # message dict -> bool
 
+        self.retrieve: int
         self.state: ConnectionState = self.messageable._state
         self.messages: asyncio.Queue[Message] = asyncio.Queue()
 
@@ -427,6 +428,7 @@ class BanIterator(_AsyncIterator["BanEntry"]):
         self.before: Optional[Snowflake] = before
         self.after: Snowflake = after or OLDEST_OBJECT
 
+        self.retrieve: int
         self.state: ConnectionState = self.guild._state
         self.bans: asyncio.Queue[BanEntry] = asyncio.Queue()
 
@@ -508,6 +510,7 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         # Maintain compatibility with `None` being passed in for `oldest_first`
         self.reverse: bool = bool(oldest_first)
 
+        self.retrive: int
         self.guild: Guild = guild
         self.loop: asyncio.AbstractEventLoop = guild._state.loop
         self.limit: Optional[int] = limit
