@@ -451,17 +451,19 @@ class AuditLogEntry(Hashable):
         guild: Guild,
     ) -> None:
         self._state = guild._state
-        self.guild = guild
+        self.guild: Guild = guild
         self._auto_moderation_rules = auto_moderation_rules
         self._users = users
         self._from_data(data)
 
     def _from_data(self, data: AuditLogEntryPayload) -> None:
-        self.action = enums.try_enum(enums.AuditLogAction, data["action_type"])
+        self.action: enums.AuditLogAction = enums.try_enum(
+            enums.AuditLogAction, data["action_type"]
+        )
         self.id = int(data["id"])
 
         # this key is technically not usually present
-        self.reason = data.get("reason")
+        self.reason: Optional[str] = data.get("reason")
         self.extra = data.get("options", {})  # type: ignore
         # I gave up trying to fix this
 
@@ -533,7 +535,7 @@ class AuditLogEntry(Hashable):
         # into meaningful data when requested
         self._changes = data.get("changes", [])
 
-        self.user = self._get_member(utils.get_as_snowflake(data, "user_id"))  # type: ignore
+        self.user: Optional[Union[Member, User]] = self._get_member(utils.get_as_snowflake(data, "user_id"))  # type: ignore
         self._target_id = utils.get_as_snowflake(data, "target_id")
 
     def _get_member(self, user_id: int) -> Union[Member, User, None]:
