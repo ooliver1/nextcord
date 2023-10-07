@@ -21,6 +21,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
     overload,
 )
 
@@ -117,9 +118,9 @@ def get_signature_parameters(
     return params
 
 
-def wrap_callback(coro):
+def wrap_callback(coro: Callable[P, Coro[T]]) -> Callable[P, Coro[Optional[T]]]:
     @functools.wraps(coro)
-    async def wrapped(*args: Any, **kwargs: Any):
+    async def wrapped(*args: P.args, **kwargs: P.kwargs) -> Optional[T]:
         try:
             ret = await coro(*args, **kwargs)
         except CommandError:
@@ -604,11 +605,14 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         except AttributeError:
             pass
         else:
-            injected = wrap_callback(coro)
+            # ParamSpec can't seem to handle a union of callables
+            injected = wrap_callback(coro)  # pyright: ignore
             if cog is not None:
-                await injected(cog, ctx, error)
+                await cast(Callable[["Cog", "Context[Any]", "Exception"], Coro[Any]], injected)(
+                    cog, ctx, error
+                )
             else:
-                await injected(ctx, error)
+                await cast(Callable[["Context[Any]", "Exception"], Coro[Any]], injected)(ctx, error)
 
         try:
             if cog is not None:
