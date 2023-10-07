@@ -107,7 +107,7 @@ if TYPE_CHECKING:
     ]
 
 
-def check(predicate: "ApplicationCheck") -> AC:
+def check(predicate: "ApplicationCheck") -> AC[InteractionT, CogT]:
     r"""A decorator that adds a check to the :class:`.BaseApplicationCommand` or its
     subclasses. These checks are accessible via :attr:`.BaseApplicationCommand.checks`.
 
@@ -186,7 +186,7 @@ def check(predicate: "ApplicationCheck") -> AC:
     return wrapper
 
 
-def check_any(*checks: "ApplicationCheck") -> AC:
+def check_any(*checks: "ApplicationCheck") -> AC[InteractionT, CogT]:
     r"""A :func:`check` that will pass if any of the given checks pass,
     i.e. using logical OR.
 
@@ -260,7 +260,7 @@ def check_any(*checks: "ApplicationCheck") -> AC:
     return check(predicate)
 
 
-def has_role(item: Union[int, str]) -> AC:
+def has_role(item: Union[int, str]) -> AC[InteractionT, CogT]:
     """A :func:`.check` that is added that checks if the member invoking the
     command has the role specified via the name or ID specified.
 
@@ -308,7 +308,7 @@ def has_role(item: Union[int, str]) -> AC:
     return check(predicate)
 
 
-def has_any_role(*items: Union[int, str]) -> AC:
+def has_any_role(*items: Union[int, str]) -> AC[InteractionT, CogT]:
     r"""A :func:`.check` that is added that checks if the member invoking the
     command has **any** of the roles specified. This means that if they have
     one out of the three roles specified, then this check will return ``True``.
@@ -351,7 +351,7 @@ def has_any_role(*items: Union[int, str]) -> AC:
     return check(predicate)
 
 
-def bot_has_role(item: Union[int, str]) -> AC:
+def bot_has_role(item: Union[int, str]) -> AC[InteractionT, CogT]:
     """Similar to :func:`.has_role` except checks if the bot itself has the
     role.
 
@@ -392,7 +392,7 @@ def bot_has_role(item: Union[int, str]) -> AC:
     return check(predicate)
 
 
-def bot_has_any_role(*items: Union[str, int]) -> AC:
+def bot_has_any_role(*items: Union[str, int]) -> AC[InteractionT, CogT]:
     """Similar to :func:`.has_any_role` except checks if the bot itself has
     any of the roles listed.
 
@@ -432,7 +432,9 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
     return check(predicate)
 
 
-def _permission_check_wrapper(predicate: ApplicationCheck, name: str, perms: Dict[str, bool]) -> AC:
+def _permission_check_wrapper(
+    predicate: ApplicationCheck, name: str, perms: Dict[str, bool]
+) -> AC[InteractionT, CogT]:
     def wrapper(func) -> CheckWrapper:
         callback = func.callback if isinstance(func, CallbackWrapper) else func
 
@@ -442,7 +444,7 @@ def _permission_check_wrapper(predicate: ApplicationCheck, name: str, perms: Dic
     return wrapper
 
 
-def has_permissions(**perms: bool) -> AC:
+def has_permissions(**perms: bool) -> AC[InteractionT, CogT]:
     """A :func:`.check` that is added that checks if the member has all of
     the permissions necessary.
 
@@ -496,7 +498,7 @@ def has_permissions(**perms: bool) -> AC:
     return _permission_check_wrapper(predicate, "__slash_required_permissions", perms)
 
 
-def bot_has_permissions(**perms: bool) -> AC:
+def bot_has_permissions(**perms: bool) -> AC[InteractionT, CogT]:
     """Similar to :func:`.has_permissions` except checks if the bot itself has
     the permissions listed.
 
@@ -530,7 +532,7 @@ def bot_has_permissions(**perms: bool) -> AC:
     return _permission_check_wrapper(predicate, "__slash_required_bot_permissions", perms)
 
 
-def has_guild_permissions(**perms: bool) -> AC:
+def has_guild_permissions(**perms: bool) -> AC[InteractionT, CogT]:
     """Similar to :func:`.has_permissions`, but operates on guild wide
     permissions instead of the current channel permissions.
 
@@ -572,7 +574,7 @@ def has_guild_permissions(**perms: bool) -> AC:
     return _permission_check_wrapper(predicate, "__slash_required_guild_permissions", perms)
 
 
-def bot_has_guild_permissions(**perms: bool) -> AC:
+def bot_has_guild_permissions(**perms: bool) -> AC[InteractionT, CogT]:
     """Similar to :func:`.has_guild_permissions`, but checks the bot
     members guild permissions.
     """
@@ -596,7 +598,7 @@ def bot_has_guild_permissions(**perms: bool) -> AC:
     return _permission_check_wrapper(predicate, "__slash_required_bot_guild_permissions", perms)
 
 
-def dm_only() -> AC:
+def dm_only() -> AC[InteractionT, CogT]:
     """A :func:`.check` that indicates this command must only be used in a
     DM context. Only private messages are allowed when
     using the command.
@@ -623,7 +625,7 @@ def dm_only() -> AC:
     return check(predicate)
 
 
-def guild_only() -> AC:
+def guild_only() -> AC[InteractionT, CogT]:
     """A :func:`.check` that indicates this command must only be used in a
     guild context only. Basically, no private messages are allowed when
     using the command.
@@ -650,7 +652,7 @@ def guild_only() -> AC:
     return check(predicate)
 
 
-def is_owner() -> AC:
+def is_owner() -> AC[InteractionT, CogT]:
     """A :func:`.check` that checks if the person invoking this command is the
     owner of the bot.
 
@@ -686,7 +688,7 @@ def is_owner() -> AC:
     return check(predicate)
 
 
-def is_nsfw() -> AC:
+def is_nsfw() -> AC[InteractionT, CogT]:
     """A :func:`.check` that checks if the channel is a NSFW channel.
 
     This check raises a special exception, :exc:`.ApplicationNSFWChannelRequired`
@@ -720,7 +722,7 @@ def application_command_before_invoke(
         BaseApplicationCommand[CogT, InteractionT, P, T],
         CoroFunc,
     ]
-) -> AC:
+) -> AC[InteractionT, CogT]:
     """A decorator that registers a coroutine as a pre-invoke hook.
 
     This allows you to refer to one before invoke hook for several commands that
@@ -791,7 +793,7 @@ def application_command_after_invoke(
         BaseApplicationCommand[CogT, InteractionT, P, T],
         CoroFunc,
     ]
-) -> AC:
+) -> AC[InteractionT, CogT]:
     """A decorator that registers a coroutine as a post-invoke hook.
 
     This allows you to refer to one after invoke hook for several commands that
