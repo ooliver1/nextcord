@@ -598,11 +598,11 @@ class ColourConverter(Converter[nextcord.Colour]):
         Added support for ``rgb`` function and 3-digit hex shortcuts
     """
 
-    RGB_REGEX = re.compile(
+    RGB_REGEX: re.Pattern[str] = re.compile(
         r"rgb\s*\((?P<r>[0-9]{1,3}%?)\s*,\s*(?P<g>[0-9]{1,3}%?)\s*,\s*(?P<b>[0-9]{1,3}%?)\s*\)"
     )
 
-    def parse_hex_number(self, argument):
+    def parse_hex_number(self, argument: str) -> nextcord.Color:
         arg = "".join(i * 2 for i in argument) if len(argument) == 3 else argument
         try:
             value = int(arg, base=16)
@@ -613,7 +613,7 @@ class ColourConverter(Converter[nextcord.Colour]):
         else:
             return nextcord.Color(value=value)
 
-    def parse_rgb_number(self, argument, number):
+    def parse_rgb_number(self, argument: str, number: str) -> int:
         if number[-1] == "%":
             value = int(number[:-1])
             if not (0 <= value <= 100):
@@ -625,7 +625,7 @@ class ColourConverter(Converter[nextcord.Colour]):
             raise BadColourArgument(argument)
         return value
 
-    def parse_rgb(self, argument, *, regex=RGB_REGEX):
+    def parse_rgb(self, argument: str, *, regex: re.Pattern[str] = RGB_REGEX) -> nextcord.Color:
         match = regex.match(argument)
         if match is None:
             raise BadColourArgument(argument)
