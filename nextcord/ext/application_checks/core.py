@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from typing import TYPE_CHECKING, Any, Callable, Dict, Union
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Dict, Generic, Union
 
 import nextcord
 from nextcord.application_command import (
@@ -42,6 +42,8 @@ if TYPE_CHECKING:
     CogT = TypeVar("CogT", bound=ClientCog)
     P = ParamSpec("P")
     T = TypeVar("T")
+    Coro = Coroutine[Any, Any, T]
+    MaybeCoro = Union[T, Coro[T]]
 
 
 __all__ = (
@@ -64,24 +66,30 @@ __all__ = (
 )
 
 
-class CheckWrapper(CallbackWrapper):
-    def __init__(self, callback: Union[Callable, CallbackWrapper], predicate) -> None:
+class CheckWrapper(CallbackWrapper, Generic[InteractionT]):
+    def __init__(
+        self,
+        callback: Union[Callable, CallbackWrapper],
+        predicate: ApplicationCheck[InteractionT],
+    ) -> None:
         super().__init__(callback)
 
+        self.predicate: Callable[[InteractionT], Coro[bool]]
         if not asyncio.iscoroutinefunction(predicate):
 
             @functools.wraps(predicate)
-            async def async_wrapper(ctx):
-                return predicate(ctx)
+            async def async_wrapper(ctx: InteractionT) -> bool:
+                # TypeGuard doesn't seem to work the other way.
+                return predicate(ctx)  # type: ignore
 
             self.predicate = async_wrapper
         else:
             self.predicate = predicate
 
-    def __call__(self, *args, **kwargs):
-        return self.predicate(*args, **kwargs)
+    async def __call__(self, *args: Any) -> bool:
+        return await self.predicate(*args)
 
-    def modify(self, app_cmd: BaseApplicationCommand[Any, Any, ..., Any]) -> None:
+    def modify(self, app_cmd: BaseApplicationCommand[CogT, InteractionT, ..., Any]) -> None:
         app_cmd.checks.append(self.predicate)
 
 
@@ -227,7 +235,7 @@ def check_any(*checks: "ApplicationCheck") -> AC:
     for wrapped in checks:
         try:
             # we only want to get the predicate, the arg type is not used
-            wrapper = wrapped(None)  # type: ignore
+            wrapper = wrapped(None)
             pred = wrapper.predicate  # type: ignore
         except AttributeError:
             raise TypeError(

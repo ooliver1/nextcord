@@ -8,14 +8,13 @@ if TYPE_CHECKING:
     from ..interactions import Interaction
 
     T = TypeVar("T")
+    InteractionT = TypeVar("InteractionT", bound=Interaction)
+    CogT = TypeVar("CogT", bound=ClientCog)
 
     Coro = Coroutine[Any, Any, T]
     MaybeCoro = Union[T, Coro[T]]
     CoroFunc = Callable[..., Coro[Any]]
-    ApplicationCheck = Union[
-        Callable[[ClientCog, Interaction[Any]], MaybeCoro[bool]],
-        Callable[[Interaction[Any]], MaybeCoro[bool]],
-    ]
+    ApplicationCheck = Callable[[InteractionT], MaybeCoro[bool]]
     ApplicationHook = Union[
         Callable[[ClientCog, Interaction[Any]], Coro[Any]], Callable[[Interaction[Any]], Coro[Any]]
     ]
