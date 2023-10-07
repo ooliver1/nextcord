@@ -32,7 +32,10 @@ if TYPE_CHECKING:
     from nextcord.member import Member
     from nextcord.user import User
 
+    from .bot import AutoShardedBot, Bot
     from .context import Context
+
+    BotT = Union[Bot, AutoShardedBot]
 
 
 __all__ = (
@@ -65,7 +68,7 @@ __all__ = (
 )
 
 
-def _get_from_guilds(bot, getter, argument):
+def _get_from_guilds(bot: BotT, getter, argument):
     result = None
     for guild in bot.guilds:
         result = getattr(guild, getter)(argument)
@@ -176,7 +179,7 @@ class MemberConverter(IDConverter[nextcord.Member]):
         optionally caching the result if :attr:`.MemberCacheFlags.joined` is enabled.
     """
 
-    async def query_member_named(self, guild, argument: str):
+    async def query_member_named(self, guild: nextcord.Guild, argument: str) -> Optional[Member]:
         cache = guild._state.member_cache_flags.joined
         if len(argument) > 5 and argument[-5] == "#":
             username, _, discriminator = argument.rpartition("#")
@@ -187,7 +190,9 @@ class MemberConverter(IDConverter[nextcord.Member]):
         finder: Callable[[Member], bool] = lambda m: argument in {m.name, m.nick}
         return nextcord.utils.find(finder, members)
 
-    async def query_member_by_id(self, bot, guild, user_id):
+    async def query_member_by_id(
+        self, bot: BotT, guild: nextcord.Guild, user_id: int
+    ) -> Optional[Member]:
         ws = bot._get_websocket(shard_id=guild.shard_id)
         cache = guild._state.member_cache_flags.joined
         if ws.is_ratelimited():
@@ -324,7 +329,7 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
     """
 
     @staticmethod
-    def _get_id_matches(ctx, argument):
+    def _get_id_matches(ctx: Context[BotT], argument: str) -> Tuple[Optional[int], int, int]:
         id_regex = re.compile(r"(?:(?P<channel_id>[0-9]{15,20})-)?(?P<message_id>[0-9]{15,20})$")
         link_regex = re.compile(
             r"https?://(?:(ptb|canary|www)\.)?discord(?:app)?\.com/channels/"
@@ -349,13 +354,18 @@ class PartialMessageConverter(Converter[nextcord.PartialMessage]):
         return guild_id, message_id, channel_id
 
     @staticmethod
-    def _resolve_channel(ctx, guild_id, channel_id) -> Optional[PartialMessageableChannel]:
+    def _resolve_channel(
+        ctx: Context[BotT], guild_id: Optional[int], channel_id: Optional[int]
+    ) -> Optional[PartialMessageableChannel]:
         if guild_id is not None:
             guild = ctx.bot.get_guild(guild_id)
             if guild is not None and channel_id is not None:
-                return guild._resolve_channel(channel_id)
+                # TODO: channel types are messed up. ctx.channel returns
+                # PartialMessageableChannel or GroupChannel, and somehow expects that to then
+                # work here?
+                return guild._resolve_channel(channel_id)  # type: ignore
             return None
-        return ctx.bot.get_channel(channel_id) if channel_id else ctx.channel
+        return ctx.bot.get_channel(channel_id) if channel_id else ctx.channel  # type: ignore
 
     async def convert(self, ctx: Context[Any], argument: str) -> nextcord.PartialMessage:
         guild_id, message_id, channel_id = self._get_id_matches(ctx, argument)
@@ -1120,7 +1130,10 @@ CONVERTER_MAPPING: Dict[Type[Any], Any] = {
 }
 
 
-async def _actual_conversion(ctx: Context[Any], converter, argument: str, param: inspect.Parameter):
+# Ideally this would be converter: T -> T, but nothing here works.
+async def _actual_conversion(
+    ctx: Context[Any], converter: Any, argument: str, param: inspect.Parameter
+) -> Any:
     if converter is bool:
         return _convert_to_bool(argument)
 
@@ -1160,7 +1173,9 @@ async def _actual_conversion(ctx: Context[Any], converter, argument: str, param:
         raise BadArgument(f'Converting to "{name}" failed for parameter "{param.name}".') from exc
 
 
-async def run_converters(ctx: Context[Any], converter, argument: str, param: inspect.Parameter):
+async def run_converters(
+    ctx: Context[Any], converter: Any, argument: str, param: inspect.Parameter
+) -> Optional[Any]:
     """|coro|
 
     Runs converters for a given converter, argument, and parameter.
