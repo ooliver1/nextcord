@@ -277,8 +277,8 @@ class AuditLogChanges:
     # fmt: on
 
     def __init__(self, entry: AuditLogEntry, data: List[AuditLogChangePayload]) -> None:
-        self.before = AuditLogDiff()
-        self.after = AuditLogDiff()
+        self.before: AuditLogDiff = AuditLogDiff()
+        self.after: AuditLogDiff = AuditLogDiff()
 
         for elem in data:
             attr = elem["key"]
