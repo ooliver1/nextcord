@@ -21,6 +21,7 @@ __all__ = (
 if TYPE_CHECKING:
     from .guild import Guild
     from .role import Role
+    from .state import ConnectionState
     from .types.integration import (
         BotIntegration as BotIntegrationPayload,
         Integration as IntegrationPayload,
@@ -89,8 +90,8 @@ class Integration:
     )
 
     def __init__(self, *, data: IntegrationPayload, guild: Guild) -> None:
-        self.guild = guild
-        self._state = guild._state
+        self.guild: Guild = guild
+        self._state: ConnectionState = guild._state
         self._from_data(data)
 
     def __repr__(self) -> str:
@@ -103,7 +104,7 @@ class Integration:
         self.account: IntegrationAccount = IntegrationAccount(data["account"])
 
         user = data.get("user")
-        self.user = User(state=self._state, data=user) if user else None
+        self.user: Optional[User] = User(state=self._state, data=user) if user else None
         self.enabled: bool = data["enabled"]
 
     async def delete(self, *, reason: Optional[str] = None) -> None:

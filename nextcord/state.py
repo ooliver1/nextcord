@@ -734,7 +734,7 @@ class ConnectionState:
         update_known: bool = True,
         register_new: bool = True,
         ignore_forbidden: bool = True,
-    ):
+    ) -> None:
         """|coro|
 
         Syncs all application commands with Discord. Will sync global commands if any commands added are global, and
@@ -1836,7 +1836,7 @@ class ConnectionState:
     def is_guild_evicted(self, guild: Guild) -> bool:
         return guild.id not in self._guilds
 
-    async def chunk_guild(self, guild: Guild, *, wait: bool = True, cache=None):
+    async def chunk_guild(self, guild: Guild, *, wait: bool = True, cache: Optional[bool] = None):
         if cache is None:
             cache = self.member_cache_flags.joined
         request = self._chunk_requests.get(guild.id)

@@ -879,12 +879,12 @@ class BaseWebhook(Hashable):
 
     def _update(self, data: WebhookPayload) -> None:
         self.id = int(data["id"])
-        self.type = try_enum(WebhookType, int(data["type"]))
-        self.channel_id = utils.get_as_snowflake(data, "channel_id")
-        self.guild_id = utils.get_as_snowflake(data, "guild_id")
-        self.name = data.get("name")
-        self._avatar = data.get("avatar")
-        self.token = data.get("token")
+        self.type: WebhookType = try_enum(WebhookType, int(data["type"]))
+        self.channel_id: Optional[int] = utils.get_as_snowflake(data, "channel_id")
+        self.guild_id: Optional[int] = utils.get_as_snowflake(data, "guild_id")
+        self.name: Optional[str] = data.get("name")
+        self._avatar: Optional[str] = data.get("avatar")
+        self.token: Optional[str] = data.get("token")
 
         user = data.get("user")
         self.user: Optional[Union[BaseUser, User]] = None
@@ -1206,7 +1206,7 @@ class Webhook(BaseWebhook):
 
         return Webhook(data, self.session, token=self.auth_token, state=self._state)
 
-    async def delete(self, *, reason: Optional[str] = None, prefer_auth: bool = True):
+    async def delete(self, *, reason: Optional[str] = None, prefer_auth: bool = True) -> None:
         """|coro|
 
         Deletes this Webhook.

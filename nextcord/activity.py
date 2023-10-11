@@ -346,7 +346,7 @@ class Game(BaseActivity):
 
     __slots__ = ("name", "_end", "_start")
 
-    def __init__(self, name: str, **extra) -> None:
+    def __init__(self, name: str, **extra: Any) -> None:
         super().__init__(**extra)
         self.name: str = name
 
@@ -551,7 +551,7 @@ class Spotify:
         "_created_at",
     )
 
-    def __init__(self, **data) -> None:
+    def __init__(self, **data: Any) -> None:
         self._state: str = data.pop("state", "")
         self._details: str = data.pop("details", "")
         self._timestamps: Dict[str, int] = data.pop("timestamps", {})

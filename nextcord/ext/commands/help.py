@@ -819,7 +819,7 @@ class HelpCommand:
             The argument passed to the help command.
         """
 
-    async def command_callback(self, ctx: Context[Any], *, command: Optional[str] = None):
+    async def command_callback(self, ctx: Context[Any], *, command: Optional[str] = None) -> None:
         """|coro|
 
         The actual implementation of the help command.

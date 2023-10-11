@@ -1422,7 +1422,7 @@ class BotBase(GroupMixin):
 
         message.content = old_content
 
-    async def on_message(self, message) -> None:
+    async def on_message(self, message: Message) -> None:
         await self.process_commands(message)
 
 

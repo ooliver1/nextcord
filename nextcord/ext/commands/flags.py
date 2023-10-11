@@ -19,6 +19,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
 )
 
 from nextcord.utils import MISSING, maybe_coroutine, resolve_annotation
@@ -394,8 +395,8 @@ async def tuple_convert_flag(
     return tuple(results)
 
 
-async def convert_flag(ctx, argument: str, flag: Flag, annotation: Any = None) -> Any:
-    param: inspect.Parameter = ctx.current_parameter
+async def convert_flag(ctx: Context[Any], argument: str, flag: Flag, annotation: Any = None) -> Any:
+    param: inspect.Parameter = cast(inspect.Parameter, ctx.current_parameter)
     annotation = annotation or flag.annotation
     try:
         origin = annotation.__origin__

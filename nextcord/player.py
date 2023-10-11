@@ -13,7 +13,18 @@ import sys
 import threading
 import time
 import traceback
-from typing import IO, TYPE_CHECKING, Any, Callable, Generic, Optional, Tuple, TypeVar, Union
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Generic,
+    Iterable,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from .enums import SpeakingState
 from .errors import ClientException
@@ -358,9 +369,9 @@ class FFmpegOpusAudio(FFmpegAudio):
         codec: Optional[str] = None,
         executable: str = "ffmpeg",
         pipe: bool = False,
-        stderr=None,
-        before_options=None,
-        options=None,
+        stderr: Optional[Union[int, IO[Any]]] = None,
+        before_options: Optional[Iterable[str]] = None,
+        options: Optional[str] = None,
     ) -> None:
         args = []
         subprocess_kwargs = {
@@ -662,7 +673,13 @@ class PCMVolumeTransformer(AudioSource, Generic[AT]):
 class AudioPlayer(threading.Thread):
     DELAY: float = OpusEncoder.FRAME_LENGTH / 1000.0
 
-    def __init__(self, source: AudioSource, client: VoiceClient, *, after=None) -> None:
+    def __init__(
+        self,
+        source: AudioSource,
+        client: VoiceClient,
+        *,
+        after: Optional[Callable[[Optional[Exception]], Any]] = None,
+    ) -> None:
         threading.Thread.__init__(self)
         self.daemon: bool = True
         self.source: AudioSource = source
@@ -680,7 +697,7 @@ class AudioPlayer(threading.Thread):
             raise TypeError('Expected a callable for the "after" parameter.')
 
     def _do_run(self) -> None:
-        self.loops = 0
+        self.loops: int = 0
         self._start = time.perf_counter()
 
         # getattr lookup speed ups

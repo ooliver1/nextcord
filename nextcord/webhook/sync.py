@@ -540,7 +540,7 @@ class SyncWebhook(BaseWebhook):
         self, data: WebhookPayload, session: Session, token: Optional[str] = None, state=None
     ) -> None:
         super().__init__(data, token, state)
-        self.session = session
+        self.session: Session = session
 
     def __repr__(self) -> str:
         return f"<Webhook id={self.id!r}>"

@@ -1351,7 +1351,7 @@ class Messageable:
         view: Optional[View] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-    ):
+    ) -> Message:
         """|coro|
 
         Sends a message to the destination with the content given.

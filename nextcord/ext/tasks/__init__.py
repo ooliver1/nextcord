@@ -40,10 +40,11 @@ class SleepHandle:
     __slots__ = ("future", "loop", "handle")
 
     def __init__(self, dt: datetime.datetime, *, loop: asyncio.AbstractEventLoop) -> None:
-        self.loop = loop
+        self.loop: asyncio.AbstractEventLoop = loop
+        self.future: asyncio.Future[Any]
         self.future = future = loop.create_future()
-        relative_delta = nextcord.utils.compute_timedelta(dt)
-        self.handle = loop.call_later(relative_delta, future.set_result, True)
+        relative_delta: float = nextcord.utils.compute_timedelta(dt)
+        self.handle: asyncio.TimerHandle = loop.call_later(relative_delta, future.set_result, True)
 
     def recalculate(self, dt: datetime.datetime) -> None:
         self.handle.cancel()

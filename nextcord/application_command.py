@@ -91,6 +91,9 @@ if TYPE_CHECKING:
     AutocompleteCallback = Union[AutocompleteNoCog, AutocompleteCog]
     AutocompleteT = TypeVar("AutocompleteT", bound=AutocompleteCallback)
     InteractionT = TypeVar("InteractionT", bound=Interaction[Any])
+    ErrorCog = Callable[[CogT, InteractionT, Exception], Coro[Any]]
+    ErrorNoCog = Callable[[InteractionT, Exception], Coro[Any]]
+    ErrorCallback = Union[ErrorCog, ErrorNoCog]
 else:
     _CustomTypingMetaBase = object
     # `ellipsis` is a type-checking only variable. This assignment avoids ruff `F821`
@@ -98,7 +101,7 @@ else:
     # `Ellipsis` is the object, but that doesn't really matter.
     ellipsis = Ellipsis
 
-EllipsisType = type(Ellipsis)
+EllipsisType: Type[ellipsis] = type(Ellipsis)
 
 if sys.version_info >= (3, 10):
     from types import UnionType
@@ -658,8 +661,8 @@ class CallbackMixin(Generic[CogT, InteractionT, P, T]):
         ] = callback
         self._callback_before_invoke: Optional[ApplicationHook] = None
         self._callback_after_invoke: Optional[ApplicationHook] = None
-        self.error_callback: Optional[Callable] = None
-        self.checks: List[ApplicationCheck] = []
+        self.error_callback: Optional[ErrorCallback] = None
+        self.checks: List[ApplicationCheck[InteractionT]] = []
         if self.callback:
             if isinstance(callback, CallbackWrapper):
                 self.callback = callback.callback
@@ -737,7 +740,7 @@ class CallbackMixin(Generic[CogT, InteractionT, P, T]):
         """:class:`bool`: Checks whether the command has an error handler registered."""
         return self.error_callback is not None
 
-    def add_check(self, func: ApplicationCheck) -> CallbackMixin:
+    def add_check(self, func: ApplicationCheck[InteractionT]) -> CallbackMixin:
         """Adds a check to the application command. Returns the application command for method chaining.
 
         Parameters
@@ -748,7 +751,7 @@ class CallbackMixin(Generic[CogT, InteractionT, P, T]):
         self.checks.append(func)
         return self
 
-    def remove_check(self, func: ApplicationCheck) -> CallbackMixin:
+    def remove_check(self, func: ApplicationCheck[InteractionT]) -> CallbackMixin:
         """Removes a check from the ApplicationCommand. Returns the application command for method chaining.
 
         This function is idempotent and will not raise an exception
@@ -925,7 +928,7 @@ class CallbackMixin(Generic[CogT, InteractionT, P, T]):
         # Command checks
         for check in self.checks:
             try:
-                check_result = await maybe_coroutine(check, interaction)  # type: ignore
+                check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
             except ApplicationCheckFailure:
                 raise
@@ -938,11 +941,12 @@ class CallbackMixin(Generic[CogT, InteractionT, P, T]):
 
         return True
 
+    # TODO: P.args/kwargs
     async def invoke_callback_with_hooks(
         self,
         state: ConnectionState,
         interaction: InteractionT,
-        args: Optional[tuple] = None,
+        args: Optional[Tuple[Any, ...]] = None,
         kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """|coro|
@@ -1001,15 +1005,15 @@ class CallbackMixin(Generic[CogT, InteractionT, P, T]):
         """
         await self(interaction, *args, **kwargs)
 
-    async def invoke_error(self, interaction: Interaction[Any], error: Exception) -> None:
+    async def invoke_error(self, interaction: InteractionT, error: Exception) -> None:
         """|coro|
         Invokes the error handler if available.
         """
         if self.has_error_handler() and self.error_callback is not None:
             if self.parent_cog:
-                await self.error_callback(self.parent_cog, interaction, error)
+                await cast("ErrorCog", self.error_callback)(self.parent_cog, interaction, error)
             else:
-                await self.error_callback(interaction, error)
+                await cast("ErrorNoCog", self.error_callback)(interaction, error)
 
     def error(self, callback: ApplicationErrorCallback) -> Callable:
         """Decorates a function, setting it as a callback to be called when a :class:`ApplicationError` or any of

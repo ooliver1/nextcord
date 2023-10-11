@@ -126,7 +126,7 @@ class Modal:
             await asyncio.sleep(self.__timeout_expiry - now)
 
     def to_components(self) -> List[ActionRowPayload]:
-        def key(item: Item) -> int:
+        def key(item: Item[Self]) -> int:
             return item._rendered_row or 0
 
         children = sorted(self.children, key=key)
@@ -165,7 +165,7 @@ class Modal:
         """
         return self.__timeout_expiry
 
-    def add_item(self, item: Item) -> Modal:
+    def add_item(self, item: Item[Self]) -> Modal:
         """Adds an item to the modal.
 
         Parameters
@@ -190,7 +190,7 @@ class Modal:
 
         return self
 
-    def remove_item(self, item: Item) -> Modal:
+    def remove_item(self, item: Item[Self]) -> Modal:
         """Removes an item from the modal.
 
         Parameters

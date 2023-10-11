@@ -19,6 +19,7 @@ from typing import (
     Literal,
     Optional,
     Tuple,
+    Type,
     TypedDict,
     TypeVar,
     overload,
@@ -54,9 +55,9 @@ __all__ = (
 
 _log = logging.getLogger(__name__)
 
-c_int_ptr = ctypes.POINTER(ctypes.c_int)
-c_int16_ptr = ctypes.POINTER(ctypes.c_int16)
-c_float_ptr = ctypes.POINTER(ctypes.c_float)
+c_int_ptr: Type[ctypes._Pointer[ctypes.c_int]] = ctypes.POINTER(ctypes.c_int)
+c_int16_ptr: Type[ctypes._Pointer[ctypes.c_int16]] = ctypes.POINTER(ctypes.c_int16)
+c_float_ptr: Type[ctypes._Pointer[ctypes.c_float]] = ctypes.POINTER(ctypes.c_float)
 
 _lib: Any = None
 
@@ -69,8 +70,8 @@ class DecoderStruct(ctypes.Structure):
     pass
 
 
-EncoderStructPtr = ctypes.POINTER(EncoderStruct)
-DecoderStructPtr = ctypes.POINTER(DecoderStruct)
+EncoderStructPtr: Type[ctypes._Pointer[EncoderStruct]] = ctypes.POINTER(EncoderStruct)
+DecoderStructPtr: Type[ctypes._Pointer[DecoderStruct]] = ctypes.POINTER(DecoderStruct)
 
 ## Some constants from opus_defines.h
 # Error codes

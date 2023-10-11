@@ -107,7 +107,7 @@ if TYPE_CHECKING:
     ]
 
 
-def check(predicate: "ApplicationCheck") -> AC[InteractionT, CogT]:
+def check(predicate: ApplicationCheck[InteractionT]) -> AC[InteractionT, CogT]:
     r"""A decorator that adds a check to the :class:`.BaseApplicationCommand` or its
     subclasses. These checks are accessible via :attr:`.BaseApplicationCommand.checks`.
 
@@ -433,7 +433,7 @@ def bot_has_any_role(*items: Union[str, int]) -> AC[InteractionT, CogT]:
 
 
 def _permission_check_wrapper(
-    predicate: ApplicationCheck, name: str, perms: Dict[str, bool]
+    predicate: ApplicationCheck[InteractionT], name: str, perms: Dict[str, bool]
 ) -> AC[InteractionT, CogT]:
     def wrapper(func) -> CheckWrapper:
         callback = func.callback if isinstance(func, CallbackWrapper) else func

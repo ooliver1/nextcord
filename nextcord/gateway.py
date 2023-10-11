@@ -24,6 +24,8 @@ from .errors import ConnectionClosed, InvalidArgument
 if TYPE_CHECKING:
     from typing import Any, Protocol
 
+    from typing_extensions import Self
+
     from .client import Client
     from .state import ConnectionState
     from .types.activity import Activity
@@ -64,11 +66,11 @@ EventListener = namedtuple("EventListener", "predicate event result future")  # 
 class GatewayRatelimiter:
     def __init__(self, count: int = 110, per: float = 60.0) -> None:
         # The default is 110 to give room for at least 10 heartbeats per minute
-        self.max = count
-        self.remaining = count
-        self.window = 0.0
-        self.per = per
-        self.lock = asyncio.Lock()
+        self.max: int = count
+        self.remaining: int = count
+        self.window: float = 0.0
+        self.per: float = per
+        self.lock: asyncio.Lock = asyncio.Lock()
         self.shard_id: Optional[int] = None
 
     def is_ratelimited(self) -> bool:
@@ -328,7 +330,7 @@ class DiscordWebSocket:
         sequence: Optional[int] = None,
         resume: bool = False,
         format_gateway: bool = False,
-    ):
+    ) -> Self:
         """Creates a main websocket for Discord from a :class:`Client`.
 
         This is for internal use only.
@@ -836,7 +838,7 @@ class DiscordVoiceWebSocket:
         *,
         resume: bool = False,
         hook: Optional[Callable[..., Awaitable[None]]] = None,
-    ):
+    ) -> Self:
         """Creates a voice websocket for the :class:`VoiceClient`."""
         gateway = "wss://" + client.endpoint + "/?v=4"
         http = client._state.http
