@@ -930,7 +930,7 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
         self.retrieve: int
         self.state: ConnectionState = self.guild._state
         self.queue: asyncio.Queue[ScheduledEventUser] = asyncio.Queue()
-        self.has_more = True
+        self.has_more: bool = True
 
     async def next(self) -> ScheduledEventUser:
         if self.queue.empty():

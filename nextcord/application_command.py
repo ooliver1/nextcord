@@ -93,7 +93,7 @@ if TYPE_CHECKING:
     InteractionT = TypeVar("InteractionT", bound=Interaction[Any])
     ErrorCog = Callable[[CogT, InteractionT, Exception], Coro[Any]]
     ErrorNoCog = Callable[[InteractionT, Exception], Coro[Any]]
-    ErrorCallback = Union[ErrorCog, ErrorNoCog]
+    ErrorCallback = Union[ErrorCog[CogT, InteractionT], ErrorNoCog[InteractionT]]
 else:
     _CustomTypingMetaBase = object
     # `ellipsis` is a type-checking only variable. This assignment avoids ruff `F821`
@@ -201,7 +201,7 @@ class CallbackWrapper:
     ) -> Union[
         CallbackWrapper,
         BaseApplicationCommand[CogT, InteractionT, P, T],
-        SlashApplicationSubcommand,
+        SlashApplicationSubcommand[CogT, InteractionT, P, T],
     ]:
         wrapper = super(CallbackWrapper, cls).__new__(cls)
         wrapper.__init__(callback, *args, **kwargs)
@@ -659,9 +659,9 @@ class CallbackMixin(Generic[CogT, InteractionT, P, T]):
                 Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
             ]
         ] = callback
-        self._callback_before_invoke: Optional[ApplicationHook] = None
-        self._callback_after_invoke: Optional[ApplicationHook] = None
-        self.error_callback: Optional[ErrorCallback] = None
+        self._callback_before_invoke: Optional[ApplicationHook[CogT, InteractionT]] = None
+        self._callback_after_invoke: Optional[ApplicationHook[CogT, InteractionT]] = None
+        self.error_callback: Optional[ErrorCallback[CogT, InteractionT]] = None
         self.checks: List[ApplicationCheck[InteractionT]] = []
         if self.callback:
             if isinstance(callback, CallbackWrapper):
@@ -2675,8 +2675,13 @@ class SlashApplicationSubcommand(
                 Callable[Concatenate[CogT, InteractionT, P], Coro[T]],
             ]
         ] = None,
-        parent_cmd: Union[SlashApplicationCommand, SlashApplicationSubcommand, None] = None,
-        parent_cog: Optional[ClientCog] = None,
+        parent_cmd: Optional[
+            Union[
+                SlashApplicationCommand[Any, Any, ..., Any],
+                SlashApplicationSubcommand[Any, Any, ..., Any],
+            ]
+        ] = None,
+        parent_cog: Optional[CogT] = None,
         inherit_hooks: bool = False,
     ) -> None:
         """Slash Application Subcommand, supporting additional subcommands and autocomplete.

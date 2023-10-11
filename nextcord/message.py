@@ -929,7 +929,7 @@ class Message(Hashable):
 
         return reaction
 
-    def _clear_emoji(self, emoji) -> Optional[Reaction]:
+    def _clear_emoji(self, emoji: EmojiInputType) -> Optional[Reaction]:
         to_check = str(emoji)
         for index, reaction in enumerate(self.reactions):  # noqa: B007
             if str(reaction.emoji) == to_check:
@@ -941,7 +941,7 @@ class Message(Hashable):
         del self.reactions[index]
         return reaction
 
-    def _update(self, data) -> None:
+    def _update(self, data: MessagePayload) -> None:
         # In an update scheme, 'author' key has to be handled before 'member'
         # otherwise they overwrite each other which is undesirable.
         # Since there's no good way to do this we have to iterate over every
