@@ -460,21 +460,22 @@ class AuditLogEntry(Hashable):
         self.action: enums.AuditLogAction = enums.try_enum(
             enums.AuditLogAction, data["action_type"]
         )
-        self.id = int(data["id"])
+        self.id: int = int(data["id"])
 
         # this key is technically not usually present
         self.reason: Optional[str] = data.get("reason")
-        self.extra = data.get("options", {})  # type: ignore
+        extra: Dict[str, Any]
+        self.extra = extra = data.get("options", {})  # type: ignore
         # I gave up trying to fix this
 
         elems: Dict[str, Any] = {}
-        channel_id = int(self.extra["channel_id"]) if self.extra.get("channel_id", None) else None
+        channel_id = int(extra["channel_id"]) if "channel_id" in extra else None
 
         if isinstance(self.action, enums.AuditLogAction) and self.extra:
             if self.action is enums.AuditLogAction.member_prune:
                 # member prune has two keys with useful information
                 self.extra = type(  # type: ignore
-                    "_AuditLogProxy", (), {k: int(v) for k, v in self.extra.items()}  # type: ignore
+                    "_AuditLogProxy", (), {k: int(v) for k, v in extra.items()}
                 )()
             elif (
                 self.action is enums.AuditLogAction.member_move
@@ -486,27 +487,27 @@ class AuditLogEntry(Hashable):
             elif self.action is enums.AuditLogAction.member_disconnect:
                 # The member disconnect action has a dict with some information
                 elems = {
-                    "count": int(self.extra["count"]),
+                    "count": int(extra["count"]),
                 }
             elif self.action.name.endswith("pin"):
                 # the pin actions have a dict with some information
                 elems = {
-                    "message_id": int(self.extra["message_id"]),
+                    "message_id": int(extra["message_id"]),
                 }
             elif self.action.name.startswith("overwrite_"):
                 # the overwrite_ actions have a dict with some information
-                instance_id = int(self.extra["id"])
-                the_type = self.extra.get("type")
+                instance_id = int(extra["id"])
+                the_type = extra.get("type")
                 if the_type == "1":
                     self.extra = self._get_member(instance_id)
                 elif the_type == "0":
                     role = self.guild.get_role(instance_id)
                     if role is None:
                         role = Object(id=instance_id)
-                        role.name = self.extra.get("role_name")  # type: ignore
+                        role.name = extra.get("role_name")  # type: ignore
                     self.extra = role  # type: ignore
             elif self.action.name.startswith("stage_instance"):
-                channel_id = int(self.extra["channel_id"])
+                channel_id = int(extra["channel_id"])
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
             elif (
                 self.action is enums.AuditLogAction.auto_moderation_block_message
@@ -514,10 +515,10 @@ class AuditLogEntry(Hashable):
                 or self.action is enums.AuditLogAction.auto_moderation_user_communication_disabled
             ):
                 elems = {
-                    "rule_name": self.extra["auto_moderation_rule_name"],
+                    "rule_name": extra["auto_moderation_rule_name"],
                     "rule_trigger_type": enums.try_enum(
                         enums.AutoModerationTriggerType,
-                        int(self.extra["auto_moderation_rule_trigger_type"]),
+                        int(extra["auto_moderation_rule_trigger_type"]),
                     ),
                 }
 

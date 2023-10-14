@@ -25,7 +25,7 @@ class ApplicationCommand(TypedDict):
     id: Snowflake
     application_id: Snowflake
     name: str
-    description: str
+    description: Optional[str]
     default_member_permissions: str
     version: Snowflake
     type: NotRequired[ApplicationCommandType]
@@ -34,14 +34,14 @@ class ApplicationCommand(TypedDict):
     default_permission: NotRequired[bool]
     dm_permission: NotRequired[bool]
     nsfw: NotRequired[bool]
-    name_localizations: NotRequired[Dict[str, str]]
-    description_localizations: NotRequired[Dict[str, str]]
+    name_localizations: NotRequired[Optional[Dict[str, str]]]
+    description_localizations: NotRequired[Optional[Dict[str, str]]]
 
 
 class ApplicationCommandOptionChoice(TypedDict):
     name: str
     value: Union[str, int, float]
-    name_localizations: Dict[str, str]
+    name_localizations: NotRequired[Optional[Dict[str, str]]]
 
 
 ApplicationCommandOptionType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
@@ -60,8 +60,8 @@ class ApplicationCommandOption(TypedDict):
     min_length: NotRequired[int]
     max_length: NotRequired[int]
     autocomplete: NotRequired[bool]
-    name_localizations: NotRequired[Dict[str, str]]
-    description_localizations: NotRequired[Dict[str, str]]
+    name_localizations: NotRequired[Optional[Dict[str, str]]]
+    description_localizations: NotRequired[Optional[Dict[str, str]]]
 
 
 ApplicationCommandPermissionType = Literal[1, 2]

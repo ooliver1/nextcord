@@ -72,6 +72,8 @@ if TYPE_CHECKING:
     from .types.interactions import (
         ApplicationCommand as ApplicationCommandPayload,
         ApplicationCommandInteractionDataOption,
+        ApplicationCommandOption as ApplicationCommandOptionPayload,
+        ApplicationCommandOptionChoice as ApplicationCommandOptionChoicePayload,
         InteractionData,
     )
 
@@ -351,7 +353,7 @@ class ApplicationCommandOption:
             for locale, description in self.description_localizations.items()
         }
 
-    def get_choices_localized_payload(self) -> List[Dict[str, Union[str, int, float, dict, None]]]:
+    def get_choices_localized_payload(self) -> List[ApplicationCommandOptionChoicePayload]:
         if self.choices is None:
             return []
 
@@ -360,10 +362,10 @@ class ApplicationCommandOption:
         else:
             choices = {value: value for value in self.choices}
 
-        ret: List[Dict[str, Union[str, int, float, dict, None]]] = []
+        ret: List[ApplicationCommandOptionChoicePayload] = []
         for display_name, value in choices.items():
             # Discord returns the names as strings, might as well do it here so payload comparison is easy.
-            temp = {
+            temp: ApplicationCommandOptionChoicePayload = {
                 "name": str(display_name),
                 "value": value,
             }
@@ -381,16 +383,16 @@ class ApplicationCommandOption:
         return ret
 
     @property
-    def payload(self) -> dict:
+    def payload(self) -> ApplicationCommandOptionPayload:
         """:class:`dict`: Returns a dict payload made of the attributes of the option to be sent to Discord."""
         if self.type is None:
             raise ValueError("The option type must be set before obtaining the payload.")
 
         # noinspection PyUnresolvedReferences
-        ret: Dict[str, Any] = {
+        ret: ApplicationCommandOptionPayload = {
             "type": self.type.value,
-            "name": self.name,
-            "description": self.description,
+            "name": cast(str, self.name),
+            "description": cast(str, self.description),
             "name_localizations": self.get_name_localization_payload(),
             "description_localizations": self.get_description_localization_payload(),
         }
@@ -1169,7 +1171,7 @@ class AutocompleteCommandMixin:
                 raise ValueError("Discord did not provide us interaction data")
 
             # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options", {})
 
             if not option_data:
                 raise ValueError("Discord did not provide us option data")

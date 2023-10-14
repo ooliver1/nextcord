@@ -2947,7 +2947,7 @@ class Client:
 
     # Application Command Global Checks
 
-    def add_application_command_check(self, func: ApplicationCheck) -> None:
+    def add_application_command_check(self, func: ApplicationCheck[InteractionT]) -> None:
         """Adds a global application command check to the client.
 
         This is the non-decorator interface to :meth:`.application_command_check`.
@@ -2959,7 +2959,7 @@ class Client:
         """
         self._application_command_checks.append(func)
 
-    def remove_application_command_check(self, func: ApplicationCheck) -> None:
+    def remove_application_command_check(self, func: ApplicationCheck[InteractionT]) -> None:
         """Removes a global application command check from the client.
 
         This function is idempotent and will not raise an exception
@@ -2974,7 +2974,9 @@ class Client:
         with contextlib.suppress(ValueError):
             self._application_command_checks.remove(func)
 
-    def application_command_check(self, func: ApplicationCheck) -> ApplicationCheck:
+    def application_command_check(
+        self, func: ApplicationCheck[InteractionT]
+    ) -> ApplicationCheck[InteractionT]:
         """A decorator that adds a global applications command check to the client.
 
         A global check is similar to a :func:`~nextcord.ext.application_checks.check` that is applied
@@ -3002,7 +3004,9 @@ class Client:
         self.add_application_command_check(func)
         return func
 
-    def application_command_before_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+    def application_command_before_invoke(
+        self, coro: ApplicationHook[CogT, InteractionT]
+    ) -> ApplicationHook[CogT, InteractionT]:
         """A decorator that registers a coroutine as a pre-invoke hook.
 
         A pre-invoke hook is called directly before the command is
@@ -3033,7 +3037,9 @@ class Client:
         self._application_command_before_invoke = coro
         return coro
 
-    def application_command_after_invoke(self, coro: ApplicationHook) -> ApplicationHook:
+    def application_command_after_invoke(
+        self, coro: ApplicationHook[CogT, InteractionT]
+    ) -> ApplicationHook[CogT, InteractionT]:
         r"""A decorator that registers a coroutine as a post-invoke hook.
 
         A post-invoke hook is called directly after the command is
