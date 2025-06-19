@@ -25,7 +25,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     overload,
 )
 
@@ -49,6 +48,7 @@ from .enums import (
     InteractionType,
     Status,
     VoiceRegion,
+    try_enum,
 )
 from .errors import *
 from .flags import ApplicationFlags, Intents
@@ -56,7 +56,13 @@ from .gateway import *
 from .guild import Guild
 from .guild_preview import GuildPreview
 from .http import HTTPClient
-from .interactions import Interaction
+from .interactions.application import (
+    ApplicationAutocompleteInteraction,
+    ApplicationCommandInteraction,
+)
+from .interactions.base import Interaction
+from .interactions.message_component import MessageComponentInteraction
+from .interactions.modal_submit import ModalSubmitInteraction
 from .invite import Invite
 from .iterators import guild_iterator
 from .mentions import AllowedMentions
@@ -66,7 +72,6 @@ from .state import ConnectionState
 from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
 from .template import Template
 from .threads import Thread
-from .types.interactions import ApplicationCommandInteractionData
 from .ui.modal import Modal
 from .ui.view import View
 from .user import ClientUser, User
@@ -97,6 +102,11 @@ __all__ = ("Client",)
 
 Coro = TypeVar("Coro", bound="CoroFunc")
 InterT = TypeVar("InterT", bound="Interaction")
+
+AppInterT = TypeVar("AppInterT", bound="ApplicationCommandInteraction")
+AutoAppInterT = TypeVar("AutoAppInterT", bound="ApplicationAutocompleteInteraction")
+ViewInterT = TypeVar("ViewInterT", bound="MessageComponentInteraction")
+ModalInterT = TypeVar("ModalInterT", bound="ModalSubmitInteraction")
 
 
 _log = logging.getLogger(__name__)
@@ -598,7 +608,7 @@ class Client:
         traceback.print_exc()
 
     async def on_application_command_error(
-        self, interaction: Interaction, exception: ApplicationError
+        self, interaction: ApplicationCommandInteraction, exception: ApplicationError
     ) -> None:
         """|coro|
 
@@ -2177,10 +2187,14 @@ class Client:
         """
         return [event for guild in self.guilds for event in guild.scheduled_events]
 
-    async def on_interaction(self, interaction: Interaction) -> None:
+    async def on_interaction(
+        self, interaction: Union[ApplicationAutocompleteInteraction, ApplicationCommandInteraction]
+    ) -> None:
         await self.process_application_commands(interaction)
 
-    async def process_application_commands(self, interaction: Interaction) -> None:
+    async def process_application_commands(
+        self, interaction: Union[ApplicationAutocompleteInteraction, ApplicationCommandInteraction]
+    ) -> None:
         """|coro|
         Processes the data in the given interaction and calls associated applications or autocomplete if possible.
         Lazy-loads commands if enabled.
@@ -2190,9 +2204,7 @@ class Client:
         interaction: :class:`Interaction`
             Interaction from Discord to read data from.
         """
-        interaction.data = cast(ApplicationCommandInteractionData, interaction.data)
-
-        if interaction.type is InteractionType.application_command:
+        if isinstance(interaction, ApplicationCommandInteraction):
             _log.debug("nextcord.Client: Found an interaction command.")
             if app_cmd := self.get_application_command(int(interaction.data["id"])):
                 _log.debug(
@@ -2923,16 +2935,97 @@ class Client:
     def get_interaction(self, data, *, cls: Type[InterT]) -> InterT: ...
 
     def get_interaction(
-        self, data, *, cls: Type[InterT] = Interaction
-    ) -> Union[Interaction, InterT]:
+        self,
+        data,
+        *,
+        application_interaction: Type[AppInterT] = ApplicationCommandInteraction,
+        application_autocomplete_interaction: Type[
+            AutoAppInterT
+        ] = ApplicationAutocompleteInteraction,
+        message_component_interaction: Type[ViewInterT] = MessageComponentInteraction,
+        modal_submit_interaction: Type[ModalInterT] = ModalSubmitInteraction,
+        cls: Type[InterT] = Interaction,
+    ) -> Union[
+        ApplicationCommandInteraction,
+        AppInterT,
+        ApplicationAutocompleteInteraction,
+        AutoAppInterT,
+        MessageComponentInteraction,
+        ViewInterT,
+        ModalSubmitInteraction,
+        ModalInterT,
+        Interaction,
+        InterT,
+    ]:
         """Returns an interaction for a gateway event.
+
+        Examples
+        --------
+        Example for a custom application command interactions class ::
+
+            class CustomApplicationCommandInteraction(nextcord.ApplicationCommandInteraction):
+                def __init__(self, *, data: InteractionPayload, state: ConnectionState):
+                    super().__init__(data=data, state=state)
+                    # Followup with any additional properties or methods you wish to add
+
+
+            # Utilize your new custom interaction class in your code:
+
+            class Client(nextcord.Client):
+                def get_interaction(self, data):
+                    return super().get_interaction(data, application_interaction=CustomApplicationCommandInteraction)
+
+            # or
+
+            class Bot(nextcord.ext.commands.Bot):
+                def get_interaction(self, data):
+                    return super().get_interaction(data, application_interaction=CustomApplicationCommandInteraction)
+
+        The above concept goes for all interaction types: ::
+
+            class Bot(nextcord.ext.commands.Bot):
+                return super().get_interaction(
+                    data,
+                    application_interaction=CustomApplicationCommandInteraction,
+                    application_autocomplete_interaction=CustomApplicationAutocompleteInteraction,
+                    message_component_interaction=MessageComponentInteraction,
+                    modal_submit_interaction=CustomModalSubmitInteraction,
+
+                    # If you want a custom Interaction object to fall back to if interaction type wasn't recognized:
+                    cls=CustomInteraction
+                )
+
+        Custom interaction classes must be set to each parameter manually. Unspecified parameters
+        continue to use Nextcord's default interaction subclasses.
 
         Parameters
         ----------
         data
             The data direct from the gateway.
+        application_interaction
+            The factory class that will be used to create the interaction for application
+            interactions. By default, this is :class:`ApplicationCommandInteraction`. Should
+            a custom class be provided, it should be a sublcass of :class:`ApplicationCommandInteraction`
+        application_autocomplete_interaction
+            The factory class that will be used to create the interaction for
+            application autocomplete interactions. By default this is
+            :class:`ApplicationAutocompleteInteraction`. Should a custom class
+            be provided, it should be a subclass of
+            :class:`ApplicationAutocompleteInteraction`
+        message_component_interaction
+            The factory class that will be used to create the interaction for
+            message components. By default this is :class:`MessageComponentInteraction`.
+            Should a custom class be provided, it should be a subclass of
+            :class:`MessageComponentInteraction`.
+        modal_submit_interaction
+            The factory class that will be used to create the interaction for
+            modals submits. By default this is :class:`ModalSubmitInteraction`.
+            Should a custom class be provided, it should be a subclass of
+            :class:`ModalSubmitInteraction`
         cls
-            The factory class that will be used to create the interaction.
+            The factory class that will be used to create the interaction if the
+            interaction type was not recognized. You shouldn't need to define
+            this parameter, you should use the other parameters instead.
             By default, this is :py:class:`Interaction`. Should a custom
             class be provided, it should be a subclass of :py:class:`Interaction`.
 
@@ -2944,7 +3037,38 @@ class Client:
         .. note::
 
             This is synchronous due to how slash commands are implemented.
+
+        Warns
+        --------
+        ~FutureWarning
+            Warns when the cls parameter is redefined to a custom class. This serves as a warning
+            in the event that defining this parameter was a mistake, and other parameters were to be defined instead.
         """
+        # check if they are creating custom interaction subclasses
+        if cls is not Interaction:
+            warnings.warn(
+                "The 'cls' parameter was given a custom Interaction class. "
+                "This parameter only gets used if the interaction type wasn't recognized.",
+                stacklevel=2,
+                category=FutureWarning,
+            )
+
+        # Get the interaction type
+        interaction_type: InteractionType = try_enum(InteractionType, data["type"])
+
+        if interaction_type == InteractionType.application_command:
+            return application_interaction(data=data, state=self._connection)
+
+        if interaction_type == InteractionType.application_command_autocomplete:
+            return application_autocomplete_interaction(data=data, state=self._connection)
+
+        if interaction_type == InteractionType.component:
+            return message_component_interaction(data=data, state=self._connection)
+
+        if interaction_type == InteractionType.modal_submit:
+            return modal_submit_interaction(data=data, state=self._connection)
+
+        # Return Base-/Custominteraction class if refined one wasn't identified
         return cls(data=data, state=self._connection)
 
     # Application Command Global Checks

@@ -128,13 +128,18 @@ class _ApplicationCommandInteractionDataOptionNumber(TypedDict):
     value: float
 
 
-ApplicationCommandInteractionDataOption = Union[
+ApplicationCommandInteractionInputDataOption = Union[
     _ApplicationCommandInteractionDataOptionString,
     _ApplicationCommandInteractionDataOptionInteger,
-    _ApplicationCommandInteractionDataOptionSubcommand,
     _ApplicationCommandInteractionDataOptionBoolean,
-    _ApplicationCommandInteractionDataOptionSnowflake,
     _ApplicationCommandInteractionDataOptionNumber,
+    _ApplicationCommandInteractionDataOptionSnowflake,
+]
+
+
+ApplicationCommandInteractionDataOption = Union[
+    ApplicationCommandInteractionInputDataOption,
+    _ApplicationCommandInteractionDataOptionSubcommand,
 ]
 
 
@@ -206,17 +211,46 @@ class Interaction(TypedDict):
     type: InteractionType
     token: str
     version: int
-    data: NotRequired[InteractionData]
     guild_id: NotRequired[Snowflake]
     channel_id: NotRequired[Snowflake]
     member: NotRequired[Member]
     user: NotRequired[User]
-    message: NotRequired[Message]
     locale: NotRequired[str]
     guild_locale: NotRequired[str]
     app_permissions: NotRequired[str]
     authorizing_integration_owners: NotRequired[AuthorizingIntegrationOwners]
     context: NotRequired[InteractionContextType]
+
+    message: NotRequired[Message]
+
+
+class ApplicationCommandInteraction(Interaction):
+    data: ApplicationCommandInteractionData
+
+
+class ApplicationAutocompleteInteraction(Interaction):
+    data: ApplicationCommandInteractionData
+
+
+class MessageComponentInteraction(Interaction):
+    data: ComponentInteractionData
+    message: Message
+    custom_id: str
+    component_id: int
+
+
+class ModalSubmitInteraction(Interaction):
+    data: ModalSubmitInteractionData
+    message: NotRequired[Message]
+    custom_id: str
+
+
+InteractionPayload = Union[
+    MessageComponentInteraction,
+    ModalSubmitInteraction,
+    ApplicationCommandInteraction,
+    ApplicationAutocompleteInteraction,
+]
 
 
 class InteractionApplicationCommandCallbackData(TypedDict, total=False):
