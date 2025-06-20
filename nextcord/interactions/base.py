@@ -1139,7 +1139,18 @@ class _InteractionMessageState:
         return getattr(self._parent, attr)
 
 
-class _InteractionMessageMixin:
+class InteractionMessage(Message):
+    """Represents the original interaction response message.
+
+    To retrieve this object see :meth:`PartialInteractionMessage.fetch`
+    or :meth:`Interaction.original_message`.
+
+    This inherits from :class:`nextcord.Message` with changes to
+    :meth:`edit` and :meth:`delete` to work with the interaction response.
+
+    .. versionadded:: 2.0
+    """
+
     __slots__ = ()
     _state: _InteractionMessageState
 
@@ -1244,7 +1255,7 @@ class _InteractionMessageMixin:
         await self._state._interaction.delete_original_message(delay=delay)
 
 
-class PartialInteractionMessage(_InteractionMessageMixin):
+class PartialInteractionMessage(InteractionMessage):
     """Represents the original interaction response message when only the
     application state and interaction token are available.
 
@@ -1343,16 +1354,3 @@ class PartialInteractionMessage(_InteractionMessageMixin):
 
     def __hash__(self) -> int:
         return hash(self._state._interaction)
-
-
-class InteractionMessage(_InteractionMessageMixin, Message):
-    """Represents the original interaction response message.
-
-    To retrieve this object see :meth:`PartialInteractionMessage.fetch`
-    or :meth:`Interaction.original_message`.
-
-    This inherits from :class:`nextcord.Message` with changes to
-    :meth:`edit` and :meth:`delete` to work with the interaction response.
-
-    .. versionadded:: 2.0
-    """
