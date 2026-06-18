@@ -55,6 +55,7 @@ __all__ = (
     "MessageReferenceType",
     "SelectDefaultValueType",
     "SeparatorSpacingSize",
+    "PollLayoutType",
 )
 
 
@@ -2133,6 +2134,18 @@ class SelectDefaultValueType(StrEnum):
 class SeparatorSpacingSize(IntEnum):
     small = 1
     large = 2
+
+
+class PollLayoutType(IntEnum):
+    """The layout type of the poll.
+
+    No extra information is provided by Discord, default is the only option for now.
+
+    .. versionadded:: 3.3
+    """
+
+    default = 1
+    """The default poll layout type."""
 
 
 T = TypeVar("T")

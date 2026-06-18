@@ -1448,6 +1448,9 @@ of :class:`enum.Enum`.
 .. autoclass:: MessageReferenceType()
     :members:
 
+.. autoclass:: PollLayoutType()
+    :members:
+
 Async Iterator
 --------------
 
